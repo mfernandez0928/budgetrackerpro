@@ -1,9 +1,5 @@
 import { useState } from "react";
-import {
-  signInAnonymously,
-  signInWithPopup,
-  GoogleAuthProvider,
-} from "firebase/auth";
+import { signInWithPopup, GoogleAuthProvider } from "firebase/auth";
 import { auth } from "../config/firebase";
 import { showToast } from "../components/Toast";
 import { useNavigate } from "react-router-dom";
@@ -33,14 +29,25 @@ export default function Auth() {
     }
   };
 
-  const handleAnonymousSignIn = async () => {
+  // Demo Mode - Uses localStorage (no Firebase)
+  const handleDemoMode = async () => {
     try {
       setLoading(true);
-      await signInAnonymously(auth);
+      localStorage.setItem(
+        "testUser",
+        JSON.stringify({
+          uid: "demo-user-" + Date.now(),
+          displayName: "Mark Dev",
+          email: "demo@budgettracker.local",
+          photoURL: "https://via.placeholder.com/40",
+        })
+      );
       showToast("✅ Demo mode activated!", "success");
-      navigate("/dashboard");
+      setTimeout(() => {
+        window.location.href = "/dashboard";
+      }, 500);
     } catch (error: any) {
-      showToast(`❌ Sign-in failed: ${error.message}`, "error");
+      showToast(`❌ Demo mode failed: ${error.message}`, "error");
     } finally {
       setLoading(false);
     }
@@ -68,7 +75,7 @@ export default function Auth() {
         </button>
 
         <button
-          onClick={handleAnonymousSignIn}
+          onClick={handleDemoMode}
           disabled={loading}
           className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-semibold transition-all disabled:opacity-50 flex items-center justify-center gap-2"
         >
