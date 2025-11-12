@@ -20,12 +20,12 @@ export default function Transactions() {
     amount: "",
   });
 
-  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterCategory, setFilterCategory] = useState("All");
   const [sortBy, setSortBy] = useState<"date" | "amount">("date");
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState<number | null>(
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(
     null
   );
 
@@ -75,7 +75,7 @@ export default function Transactions() {
     setErrors({});
   };
 
-  const handleDelete = (id: number) => {
+  const handleDelete = (id: string) => {
     deleteTransaction(id);
     setShowDeleteConfirm(null);
     showToast("🗑️ Transaction deleted successfully!", "success");
