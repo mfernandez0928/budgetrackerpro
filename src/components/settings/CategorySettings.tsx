@@ -2,14 +2,6 @@ import { useState } from "react";
 import { useStore } from "../../store/useStore";
 import { showToast } from "../Toast";
 
-const DEFAULT_CATEGORIES = [
-  "income",
-  "housing",
-  "food",
-  "transportation",
-  "other",
-];
-
 export default function CategorySettings() {
   const { categories, addCategory, deleteCategory, updateCategory } =
     useStore();
@@ -26,13 +18,11 @@ export default function CategorySettings() {
       showToast("❌ Category name is required", "error");
       return;
     }
-
     addCategory({
       name: newCategoryName,
       color: newCategoryColor,
       emoji: newCategoryEmoji,
     });
-
     setNewCategoryName("");
     setNewCategoryColor("#6b7280");
     setNewCategoryEmoji("📦");
@@ -54,7 +44,6 @@ export default function CategorySettings() {
       showToast("❌ Category name is required", "error");
       return;
     }
-
     if (editingId) {
       updateCategory(editingId, {
         name: editName,
@@ -67,23 +56,11 @@ export default function CategorySettings() {
   };
 
   const handleDeleteCategory = (id: string) => {
-    if (DEFAULT_CATEGORIES.includes(id)) {
-      showToast("❌ Cannot delete default categories", "error");
-      return;
-    }
-
     if (confirm("Are you sure you want to delete this category?")) {
       deleteCategory(id);
       showToast("✅ Category deleted!", "success");
     }
   };
-
-  const defaultCats = categories.filter((c) =>
-    DEFAULT_CATEGORIES.includes(c.id)
-  );
-  const customCats = categories.filter(
-    (c) => !DEFAULT_CATEGORIES.includes(c.id)
-  );
 
   return (
     <div>
@@ -127,16 +104,16 @@ export default function CategorySettings() {
         </div>
       </div>
 
-      {/* Default Categories */}
-      <div className="mb-6">
+      {/* Categories Table/List */}
+      <div>
         <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-          🔒 Default Categories (Protected)
+          All Categories (Editable & Deletable)
         </p>
         <div className="space-y-2">
-          {defaultCats.map((category) => (
+          {categories.map((category) => (
             <div
               key={category.id}
-              className="flex items-center justify-between bg-gray-100 dark:bg-gray-700/50 rounded-lg p-3 opacity-75"
+              className="flex items-center justify-between bg-gray-100 dark:bg-gray-700 rounded-lg p-3 hover:bg-gray-200 dark:hover:bg-gray-600 transition"
             >
               <div className="flex items-center gap-3">
                 <div
@@ -148,62 +125,24 @@ export default function CategorySettings() {
                   {category.name}
                 </span>
               </div>
-              <span className="text-xs text-gray-500 dark:text-gray-400">
-                Protected
-              </span>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => handleEditCategory(category.id)}
+                  className="text-blue-600 hover:text-blue-700 font-semibold text-sm px-3 py-1 rounded hover:bg-blue-100 dark:hover:bg-blue-900/30 transition"
+                >
+                  ✏️ Edit
+                </button>
+                <button
+                  onClick={() => handleDeleteCategory(category.id)}
+                  className="text-red-600 hover:text-red-700 font-semibold text-sm px-3 py-1 rounded hover:bg-red-100 dark:hover:bg-red-900/30 transition"
+                >
+                  🗑️ Delete
+                </button>
+              </div>
             </div>
           ))}
         </div>
       </div>
-
-      {/* Custom Categories */}
-      {customCats.length > 0 && (
-        <div>
-          <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-            ✏️ Custom Categories (Editable)
-          </p>
-          <div className="space-y-2">
-            {customCats.map((category) => (
-              <div
-                key={category.id}
-                className="flex items-center justify-between bg-gray-100 dark:bg-gray-700 rounded-lg p-3 hover:bg-gray-200 dark:hover:bg-gray-600 transition"
-              >
-                <div className="flex items-center gap-3">
-                  <div
-                    className="w-6 h-6 rounded"
-                    style={{ backgroundColor: category.color }}
-                  ></div>
-                  <span className="text-2xl">{category.emoji}</span>
-                  <span className="text-gray-800 dark:text-white font-medium">
-                    {category.name}
-                  </span>
-                </div>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => handleEditCategory(category.id)}
-                    className="text-blue-600 hover:text-blue-700 font-semibold text-sm px-3 py-1 rounded hover:bg-blue-100 dark:hover:bg-blue-900/30 transition"
-                  >
-                    ✏️ Edit
-                  </button>
-                  <button
-                    onClick={() => handleDeleteCategory(category.id)}
-                    className="text-red-600 hover:text-red-700 font-semibold text-sm px-3 py-1 rounded hover:bg-red-100 dark:hover:bg-red-900/30 transition"
-                  >
-                    🗑️ Delete
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {customCats.length === 0 && (
-        <div className="text-center p-6 bg-gray-100 dark:bg-gray-700 rounded-lg text-gray-500 dark:text-gray-400">
-          <p>No custom categories yet</p>
-          <p className="text-sm">Add one above to get started!</p>
-        </div>
-      )}
 
       {/* Edit Modal */}
       {editingId && (
