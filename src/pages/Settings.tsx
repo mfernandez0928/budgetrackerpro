@@ -1,12 +1,13 @@
 import { useState, useEffect } from "react";
 import { useStore } from "../store/useStore";
 import { showToast } from "../components/Toast";
+import { signOut } from "firebase/auth";
+import { auth } from "../config/firebase";
 import CategorySettings from "../components/settings/CategorySettings";
 
 export default function Settings() {
   const { transactions, categories, settings, updateSettings } = useStore();
 
-  // Local state that matches the store
   const [localSettings, setLocalSettings] = useState({
     currency: settings.currency,
     darkMode: settings.darkMode,
@@ -14,7 +15,6 @@ export default function Settings() {
     startOfMonth: settings.startOfMonth,
   });
 
-  // Update local state when store settings change
   useEffect(() => {
     setLocalSettings({
       currency: settings.currency,
@@ -24,7 +24,6 @@ export default function Settings() {
     });
   }, [settings]);
 
-  // Handle individual setting changes and auto-save
   const handleAICategorization = (checked: boolean) => {
     setLocalSettings({ ...localSettings, aiCategorization: checked });
     updateSettings({ aiCategorization: checked });
@@ -57,7 +56,6 @@ export default function Settings() {
     showToast("✅ Start of month updated!", "success");
   };
 
-  // Export functionality
   const handleExport = () => {
     try {
       const data = JSON.stringify(
@@ -82,7 +80,6 @@ export default function Settings() {
     }
   };
 
-  // Backup functionality
   const handleCreateBackup = () => {
     try {
       const data = { transactions, categories, settings };
@@ -93,7 +90,6 @@ export default function Settings() {
     }
   };
 
-  // Restore functionality
   const handleRestoreBackup = () => {
     try {
       const backup = localStorage.getItem("budgetBackup");
@@ -116,26 +112,49 @@ export default function Settings() {
     }
   };
 
-  // Start over functionality
   const handleStartOver = () => {
-    if (
-      confirm(
-        "⚠️ This will delete ALL data including transactions and categories. This action CANNOT be undone. Are you absolutely sure?"
-      )
-    ) {
-      localStorage.removeItem("budget-tracker-storage");
-      localStorage.removeItem("budgetBackup");
-      showToast("🔄 Starting over... Reloading app...", "warning");
-      setTimeout(() => {
-        window.location.reload();
-      }, 1000);
+    const confirmMessage =
+      "⚠️ COMPLETE RESET\n\n" +
+      "This will DELETE:\n" +
+      "❌ ALL transactions\n" +
+      "❌ ALL categories\n" +
+      "❌ ALL settings\n" +
+      "❌ You will be logged out\n\n" +
+      "This CANNOT be undone.\n\n" +
+      "Type CONFIRM to proceed:";
+
+    const userConfirm = prompt(confirmMessage);
+
+    if (userConfirm === "CONFIRM") {
+      try {
+        // Clear all data
+        localStorage.removeItem("budget-tracker-storage");
+        localStorage.removeItem("budgetBackup");
+        localStorage.removeItem("testUser");
+
+        // Clear session storage
+        sessionStorage.clear();
+
+        // Sign out
+        signOut(auth).catch(() => {});
+
+        showToast("🔄 Complete reset in progress...", "warning");
+
+        // Redirect after delay
+        setTimeout(() => {
+          window.location.href = "/auth";
+        }, 1500);
+      } catch (error) {
+        showToast("❌ Reset failed!", "error");
+      }
+    } else if (userConfirm !== null) {
+      showToast("❌ You must type CONFIRM to reset", "error");
     }
   };
 
   return (
     <main className="min-h-screen bg-gray-50 dark:bg-gray-900 px-4 py-8 transition-colors">
       <div className="max-w-3xl mx-auto">
-        {/* Header */}
         <div className="mb-8">
           <h1 className="text-4xl font-bold text-gray-900 dark:text-white">
             Settings
@@ -151,15 +170,14 @@ export default function Settings() {
             General Settings
           </h2>
           <div className="space-y-4">
-            {/* AI Transaction Categorization */}
+            {/* AI Categorization */}
             <div className="flex items-center justify-between pb-4 border-b border-gray-200 dark:border-gray-700">
               <div>
                 <p className="font-medium text-gray-800 dark:text-white">
                   🤖 AI Transaction Categorization
                 </p>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Automatically categorize your transactions based on
-                  description
+                  Automatically categorize transactions
                 </p>
               </div>
               <label className="relative inline-flex items-center cursor-pointer">
@@ -194,7 +212,7 @@ export default function Settings() {
               </label>
             </div>
 
-            {/* Currency Symbol */}
+            {/* Currency */}
             <div className="flex items-center justify-between pb-4 border-b border-gray-200 dark:border-gray-700">
               <div>
                 <p className="font-medium text-gray-800 dark:text-white">
@@ -244,7 +262,7 @@ export default function Settings() {
         </div>
 
         {/* Data Management */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 transition-colors">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 mb-8 transition-colors">
           <h2 className="text-xl font-semibold text-gray-800 dark:text-white mb-6">
             📊 Data Management
           </h2>
@@ -274,8 +292,16 @@ export default function Settings() {
               onClick={handleStartOver}
               className="bg-red-600 hover:bg-red-700 active:bg-red-800 text-white rounded-lg px-4 py-3 font-semibold transition-all duration-200 flex items-center justify-center gap-2"
             >
-              🔄 Start Over
+              🔄 Complete Reset
             </button>
+          </div>
+
+          <div className="mt-6 p-4 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-700">
+            <p className="text-sm text-red-900 dark:text-red-300">
+              <strong>⚠️ Complete Reset:</strong> Deletes ALL data and logs you
+              out. Type "CONFIRM" in the prompt to proceed. This cannot be
+              undone!
+            </p>
           </div>
         </div>
       </div>
