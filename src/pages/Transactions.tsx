@@ -1,172 +1,381 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
+import { useStore } from "../store/useStore";
+import { showToast } from "../components/Toast";
 
-// Example initial data:
-const initialTransactions = [
-  {
-    id: 1,
-    date: "2025-06-01",
-    description: "Monthly Salary",
-    category: "Income",
-    amount: 4500,
-  },
-  {
-    id: 2,
-    date: "2025-06-02",
-    description: "Rent Payment",
-    category: "Housing",
-    amount: -1200,
-  },
-  {
-    id: 3,
-    date: "2025-06-03",
-    description: "Grocery Shopping",
-    category: "Food",
-    amount: -150,
-  },
-  {
-    id: 4,
-    date: "2025-06-05",
-    description: "Gas Station",
-    category: "Transportation",
-    amount: -45,
-  },
-  // ...add more rows based on your screenshot
-];
+export default function Transactions() {
+  const {
+    transactions,
+    addTransaction,
+    deleteTransaction,
+    updateTransaction,
+    categories,
+  } = useStore();
 
-function TransactionForm({ onAdd }) {
   const [form, setForm] = useState({
-    date: "",
+    date: new Date().toISOString().split("T")[0],
     description: "",
-    category: "",
+    category: "Income",
     amount: "",
   });
 
-  function handleChange(e) {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  }
-  function handleSubmit(e) {
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterCategory, setFilterCategory] = useState("All");
+  const [sortBy, setSortBy] = useState<"date" | "amount">("date");
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState<number | null>(
+    null
+  );
+
+  const validate = () => {
+    const newErrors: Record<string, string> = {};
+    if (!form.description.trim())
+      newErrors.description = "Description is required";
+    if (!form.amount || parseFloat(form.amount) === 0)
+      newErrors.amount = "Amount must be non-zero";
+    if (!form.date) newErrors.date = "Date is required";
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onAdd({ ...form, amount: Number(form.amount), id: Date.now() });
-    setForm({ date: "", description: "", category: "", amount: "" });
-  }
-  return (
-    <form
-      onSubmit={handleSubmit}
-      className="flex flex-wrap gap-4 bg-white rounded-lg p-6 shadow mb-5"
-    >
-      <input
-        name="date"
-        type="date"
-        value={form.date}
-        onChange={handleChange}
-        className="border px-2 py-1 rounded w-32"
-        required
-      />
-      <input
-        name="description"
-        type="text"
-        placeholder="Description"
-        value={form.description}
-        onChange={handleChange}
-        className="border px-2 py-1 rounded w-44"
-        required
-      />
-      <input
-        name="amount"
-        type="number"
-        step="0.01"
-        placeholder="Amount"
-        value={form.amount}
-        onChange={handleChange}
-        className="border px-2 py-1 rounded w-24"
-        required
-      />
-      <select
-        name="category"
-        value={form.category}
-        onChange={handleChange}
-        className="border px-2 py-1 rounded w-36"
-        required
-      >
-        <option value="">Category</option>
-        <option>Income</option>
-        <option>Housing</option>
-        <option>Food</option>
-        <option>Transportation</option>
-        <option>Utilities</option>
-        <option>Entertainment</option>
-        <option>Healthcare</option>
-        <option>Personal</option>
-      </select>
-      <button
-        type="submit"
-        className="px-4 py-1 bg-blue-600 text-white rounded hover:bg-blue-700"
-      >
-        Add Transaction
-      </button>
-    </form>
-  );
-}
+    if (!validate()) return;
 
-function TransactionTable({ transactions, onDelete }) {
-  return (
-    <table className="w-full bg-white rounded-lg shadow text-sm">
-      <thead>
-        <tr className="text-gray-500 bg-gray-100">
-          <th className="py-2 px-3 text-left">Date</th>
-          <th className="py-2 px-3 text-left">Description</th>
-          <th className="py-2 px-3 text-left">Category</th>
-          <th className="py-2 px-3 text-right">Amount</th>
-          <th className="py-2 px-3 text-center">Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        {transactions.map((tx) => (
-          <tr key={tx.id} className="border-t last:border-b">
-            <td className="py-2 px-3">{tx.date}</td>
-            <td className="py-2 px-3">{tx.description}</td>
-            <td className="py-2 px-3">{tx.category}</td>
-            <td
-              className={`py-2 px-3 text-right ${
-                tx.amount < 0 ? "text-red-600" : "text-green-600"
-              }`}
-            >
-              {tx.amount < 0
-                ? `-$${Math.abs(tx.amount).toFixed(2)}`
-                : `+$${tx.amount.toFixed(2)}`}
-            </td>
-            <td className="py-2 px-3 text-center">
-              <button
-                onClick={() => onDelete(tx.id)}
-                className="text-red-500 px-2"
-                title="Delete"
-              >
-                🗑
-              </button>
-            </td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  );
-}
+    const amount =
+      form.category === "Income"
+        ? Math.abs(parseFloat(form.amount))
+        : -Math.abs(parseFloat(form.amount));
 
-export default function Transactions() {
-  const [transactions, setTransactions] = useState(initialTransactions);
-  function addTransaction(tx) {
-    setTransactions([...transactions, tx]);
-  }
-  function removeTransaction(id) {
-    setTransactions(transactions.filter((tx) => tx.id !== id));
-  }
+    if (editingId) {
+      updateTransaction(editingId, {
+        ...form,
+        amount,
+      });
+      showToast("✅ Transaction updated successfully!", "success");
+      setEditingId(null);
+    } else {
+      addTransaction({
+        date: form.date,
+        description: form.description,
+        category: form.category,
+        amount,
+      });
+      showToast("✅ Transaction added successfully!", "success");
+    }
+
+    setForm({
+      date: new Date().toISOString().split("T")[0],
+      description: "",
+      category: "Income",
+      amount: "",
+    });
+    setErrors({});
+  };
+
+  const handleDelete = (id: number) => {
+    deleteTransaction(id);
+    setShowDeleteConfirm(null);
+    showToast("🗑️ Transaction deleted successfully!", "success");
+  };
+
+  const handleEdit = (tx: (typeof transactions)[0]) => {
+    setEditingId(tx.id);
+    setForm({
+      date: tx.date,
+      description: tx.description,
+      category: tx.category,
+      amount: Math.abs(tx.amount).toString(),
+    });
+  };
+
+  // Filter and sort transactions
+  const filteredTransactions = useMemo(() => {
+    let filtered = transactions;
+
+    if (searchTerm) {
+      filtered = filtered.filter((t) =>
+        t.description.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    if (filterCategory !== "All") {
+      filtered = filtered.filter((t) => t.category === filterCategory);
+    }
+
+    // Sort
+    filtered = [...filtered].sort((a, b) => {
+      if (sortBy === "date") {
+        return new Date(b.date).getTime() - new Date(a.date).getTime();
+      } else {
+        return Math.abs(b.amount) - Math.abs(a.amount);
+      }
+    });
+
+    return filtered;
+  }, [transactions, searchTerm, filterCategory, sortBy]);
+
   return (
-    <main className="max-w-4xl mx-auto p-8">
-      <h2 className="font-bold text-xl mb-4">Transaction History</h2>
-      <TransactionForm onAdd={addTransaction} />
-      <TransactionTable
-        transactions={transactions}
-        onDelete={removeTransaction}
-      />
+    <main className="min-h-screen bg-gray-50 px-4 py-8">
+      <div className="max-w-5xl mx-auto">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-4xl font-bold text-gray-900">
+            Transaction History
+          </h1>
+          <p className="text-gray-600 mt-2">
+            Add, edit, and manage your transactions
+          </p>
+        </div>
+
+        {/* Form */}
+        <div className="bg-white rounded-xl shadow-md p-6 mb-8">
+          <h2 className="text-xl font-semibold text-gray-800 mb-4">
+            {editingId ? "Edit Transaction" : "Add New Transaction"}
+          </h2>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Date
+                </label>
+                <input
+                  type="date"
+                  value={form.date}
+                  onChange={(e) => setForm({ ...form, date: e.target.value })}
+                  className={`w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                    errors.date ? "border-red-500" : "border-gray-300"
+                  }`}
+                />
+                {errors.date && (
+                  <p className="text-red-500 text-xs mt-1">{errors.date}</p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Description
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g., Coffee, Rent..."
+                  value={form.description}
+                  onChange={(e) =>
+                    setForm({ ...form, description: e.target.value })
+                  }
+                  className={`w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                    errors.description ? "border-red-500" : "border-gray-300"
+                  }`}
+                />
+                {errors.description && (
+                  <p className="text-red-500 text-xs mt-1">
+                    {errors.description}
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Amount
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  placeholder="0.00"
+                  value={form.amount}
+                  onChange={(e) => setForm({ ...form, amount: e.target.value })}
+                  className={`w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                    errors.amount ? "border-red-500" : "border-gray-300"
+                  }`}
+                />
+                {errors.amount && (
+                  <p className="text-red-500 text-xs mt-1">{errors.amount}</p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Category
+                </label>
+                <select
+                  value={form.category}
+                  onChange={(e) =>
+                    setForm({ ...form, category: e.target.value })
+                  }
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  {categories.map((cat) => (
+                    <option key={cat.id} value={cat.name}>
+                      {cat.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flex items-end gap-2">
+                <button
+                  type="submit"
+                  className="flex-1 bg-blue-600 text-white rounded-lg px-4 py-2 font-semibold hover:bg-blue-700 transition-colors"
+                >
+                  {editingId ? "Update" : "+ Add"}
+                </button>
+                {editingId && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditingId(null);
+                      setForm({
+                        date: new Date().toISOString().split("T")[0],
+                        description: "",
+                        category: "Income",
+                        amount: "",
+                      });
+                    }}
+                    className="bg-gray-400 text-white rounded-lg px-3 py-2 hover:bg-gray-500 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                )}
+              </div>
+            </div>
+          </form>
+        </div>
+
+        {/* Filters & Search */}
+        <div className="bg-white rounded-xl shadow-md p-4 mb-6 flex flex-col md:flex-row gap-4">
+          <input
+            type="text"
+            placeholder="🔍 Search transactions..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="flex-1 border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500"
+          />
+          <select
+            value={filterCategory}
+            onChange={(e) => setFilterCategory(e.target.value)}
+            className="border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500"
+          >
+            <option>All Categories</option>
+            {categories.map((cat) => (
+              <option key={cat.id} value={cat.name}>
+                {cat.name}
+              </option>
+            ))}
+          </select>
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value as "date" | "amount")}
+            className="border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="date">Sort by Date</option>
+            <option value="amount">Sort by Amount</option>
+          </select>
+        </div>
+
+        {/* Transactions Table */}
+        <div className="bg-white rounded-xl shadow-md overflow-hidden">
+          {filteredTransactions.length === 0 ? (
+            <div className="p-8 text-center text-gray-500">
+              <p className="text-lg">No transactions found</p>
+              <p className="text-sm">Start by adding a transaction above</p>
+            </div>
+          ) : (
+            <table className="w-full">
+              <thead className="bg-gray-50 border-b border-gray-200">
+                <tr>
+                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">
+                    Date
+                  </th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">
+                    Description
+                  </th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">
+                    Category
+                  </th>
+                  <th className="px-6 py-3 text-right text-sm font-semibold text-gray-700">
+                    Amount
+                  </th>
+                  <th className="px-6 py-3 text-center text-sm font-semibold text-gray-700">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredTransactions.map((tx) => (
+                  <tr
+                    key={tx.id}
+                    className="border-b border-gray-200 hover:bg-gray-50 transition"
+                  >
+                    <td className="px-6 py-4 text-sm text-gray-800">
+                      {tx.date}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-800 font-medium">
+                      {tx.description}
+                    </td>
+                    <td className="px-6 py-4 text-sm">
+                      <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-semibold">
+                        {tx.category}
+                      </span>
+                    </td>
+                    <td
+                      className={`px-6 py-4 text-sm font-semibold text-right ${
+                        tx.amount >= 0 ? "text-green-600" : "text-red-600"
+                      }`}
+                    >
+                      {tx.amount >= 0 ? "+" : ""}
+                      {tx.amount.toFixed(2)}
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      <button
+                        onClick={() => handleEdit(tx)}
+                        className="text-blue-500 hover:text-blue-700 mr-3 transition"
+                        title="Edit"
+                      >
+                        ✏️
+                      </button>
+                      <button
+                        onClick={() => setShowDeleteConfirm(tx.id)}
+                        className="text-red-500 hover:text-red-700 transition"
+                        title="Delete"
+                      >
+                        🗑️
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+
+        {/* Delete Confirmation Modal */}
+        {showDeleteConfirm && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-40">
+            <div className="bg-white rounded-lg shadow-lg p-6 max-w-sm">
+              <p className="text-gray-800 font-semibold mb-4">
+                Are you sure you want to delete this transaction?
+              </p>
+              <p className="text-gray-600 text-sm mb-6">
+                This action cannot be undone.
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowDeleteConfirm(null)}
+                  className="flex-1 bg-gray-300 text-gray-800 rounded-lg px-4 py-2 font-semibold hover:bg-gray-400"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => handleDelete(showDeleteConfirm)}
+                  className="flex-1 bg-red-600 text-white rounded-lg px-4 py-2 font-semibold hover:bg-red-700"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
     </main>
   );
 }

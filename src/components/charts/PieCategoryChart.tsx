@@ -1,44 +1,54 @@
-import { PieChart, Pie, Cell } from "recharts";
-
-const pieData = [
-  { name: "Housing", value: 1200, color: "#3b82f6" },
-  { name: "Food", value: 800, color: "#6ee7b7" },
-  { name: "Transportation", value: 400, color: "#fde68a" },
-  { name: "Utilities", value: 300, color: "#fbbf24" },
-  { name: "Entertainment", value: 400, color: "#f472b6" },
-  { name: "Healthcare", value: 200, color: "#06b6d4" },
-  { name: "Other", value: 100, color: "#d1d5db" },
-];
+import {
+  PieChart,
+  Pie,
+  Cell,
+  ResponsiveContainer,
+  Legend,
+  Tooltip,
+} from "recharts";
+import { useStore } from "../../store/useStore";
 
 export function PieCategoryChart() {
-  return (
-    <div className="flex items-center">
-      <PieChart width={220} height={220}>
-        <Pie
-          data={pieData}
-          dataKey="value"
-          nameKey="name"
-          cx="50%"
-          cy="50%"
-          outerRadius={80}
-          label
-        >
-          {pieData.map((entry, idx) => (
-            <Cell key={`cell-${idx}`} fill={entry.color} />
-          ))}
-        </Pie>
-      </PieChart>
-      <div className="ml-4 flex flex-col gap-2 text-xs">
-        {pieData.map((cat) => (
-          <div key={cat.name} className="flex items-center gap-2">
-            <span
-              style={{ background: cat.color }}
-              className="inline-block w-3 h-3 mr-2 rounded"
-            ></span>
-            <span>{cat.name}</span>
-          </div>
-        ))}
+  const { getCategoryBreakdown } = useStore();
+  const pieData = getCategoryBreakdown();
+
+  if (pieData.length === 0) {
+    return (
+      <div>
+        <h2 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">
+          Spending by Category
+        </h2>
+        <p className="text-gray-500 dark:text-gray-400 text-center py-16">
+          No spending data available
+        </p>
       </div>
+    );
+  }
+
+  return (
+    <div>
+      <h2 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">
+        Spending by Category
+      </h2>
+      <ResponsiveContainer width="100%" height={280}>
+        <PieChart>
+          <Pie
+            data={pieData}
+            dataKey="amount"
+            nameKey="name"
+            cx="40%"
+            cy="50%"
+            outerRadius={80}
+            label={(entry) => `${entry.percent}%`}
+          >
+            {pieData.map((entry, idx) => (
+              <Cell key={`cell-${idx}`} fill={entry.color} />
+            ))}
+          </Pie>
+          <Tooltip formatter={(value: number) => `$${value.toFixed(2)}`} />
+          <Legend layout="vertical" align="right" verticalAlign="middle" />
+        </PieChart>
+      </ResponsiveContainer>
     </div>
   );
 }

@@ -6,30 +6,49 @@ import {
   CartesianGrid,
   Tooltip,
   Legend,
+  ResponsiveContainer,
 } from "recharts";
-
-const data = [
-  { name: "Jan", income: 3500, expenses: 3000 },
-  { name: "Feb", income: 3700, expenses: 3200 },
-  { name: "Mar", income: 4100, expenses: 3400 },
-  { name: "Apr", income: 3800, expenses: 3200 },
-  { name: "May", income: 3900, expenses: 3600 },
-  { name: "Jun", income: 4200, expenses: 3300 },
-];
+import { useStore } from "../../store/useStore";
 
 export function MonthlyOverviewChart() {
+  const { transactions } = useStore();
+
+  // Group transactions by month
+  const monthlyData = transactions.reduce((acc: any[], tx) => {
+    const date = new Date(tx.date);
+    const monthYear = `${date.toLocaleString("default", { month: "short" })}`;
+
+    let monthEntry = acc.find((m) => m.name === monthYear);
+    if (!monthEntry) {
+      monthEntry = { name: monthYear, income: 0, expenses: 0 };
+      acc.push(monthEntry);
+    }
+
+    if (tx.amount > 0) {
+      monthEntry.income += tx.amount;
+    } else {
+      monthEntry.expenses += Math.abs(tx.amount);
+    }
+
+    return acc;
+  }, []);
+
   return (
-    <>
-      <h2 className="font-semibold text-base mb-4">Monthly Overview</h2>
-      <BarChart width={430} height={220} data={data}>
-        <CartesianGrid strokeDasharray="3 3" />
-        <XAxis dataKey="name" />
-        <YAxis />
-        <Tooltip />
-        <Legend />
-        <Bar dataKey="income" fill="#4ade80" />
-        <Bar dataKey="expenses" fill="#f87171" />
-      </BarChart>
-    </>
+    <div>
+      <h2 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">
+        Monthly Overview
+      </h2>
+      <ResponsiveContainer width="100%" height={280}>
+        <BarChart data={monthlyData}>
+          <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+          <XAxis dataKey="name" />
+          <YAxis />
+          <Tooltip />
+          <Legend />
+          <Bar dataKey="expenses" fill="#f87171" radius={[8, 8, 0, 0]} />
+          <Bar dataKey="income" fill="#4ade80" radius={[8, 8, 0, 0]} />
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
   );
 }
