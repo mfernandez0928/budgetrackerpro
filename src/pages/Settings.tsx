@@ -24,13 +24,18 @@ export default function Settings() {
     });
   }, [settings]);
 
-  // Save all settings to store
-  const handleSaveSettings = () => {
-    updateSettings(localSettings);
-    showToast("✅ Settings saved successfully!", "success");
+  // Handle individual setting changes and auto-save
+  const handleAICategorization = (checked: boolean) => {
+    setLocalSettings({ ...localSettings, aiCategorization: checked });
+    updateSettings({ aiCategorization: checked });
+    showToast(
+      checked
+        ? "✅ AI categorization enabled!"
+        : "❌ AI categorization disabled!",
+      "success"
+    );
   };
 
-  // Handle individual setting changes and auto-save
   const handleCurrencyChange = (value: string) => {
     setLocalSettings({ ...localSettings, currency: value });
     updateSettings({ currency: value });
@@ -42,17 +47,6 @@ export default function Settings() {
     updateSettings({ darkMode: checked });
     showToast(
       checked ? "🌙 Dark mode enabled!" : "☀️ Light mode enabled!",
-      "success"
-    );
-  };
-
-  const handleAICategorization = (checked: boolean) => {
-    setLocalSettings({ ...localSettings, aiCategorization: checked });
-    updateSettings({ aiCategorization: checked });
-    showToast(
-      checked
-        ? "✅ AI categorization enabled!"
-        : "❌ AI categorization disabled!",
       "success"
     );
   };
@@ -109,7 +103,6 @@ export default function Settings() {
       }
       const data = JSON.parse(backup);
       if (data.transactions && data.categories && data.settings) {
-        // Update all data via updateSettings (which updates the store)
         updateSettings(data.settings);
         showToast(
           "✅ Backup restored successfully! (Reload to see all changes)",
@@ -130,12 +123,9 @@ export default function Settings() {
         "⚠️ This will delete ALL data including transactions and categories. This action CANNOT be undone. Are you absolutely sure?"
       )
     ) {
-      // Clear localStorage
       localStorage.removeItem("budget-tracker-storage");
       localStorage.removeItem("budgetBackup");
       showToast("🔄 Starting over... Reloading app...", "warning");
-
-      // Reload after a short delay
       setTimeout(() => {
         window.location.reload();
       }, 1000);
@@ -165,10 +155,11 @@ export default function Settings() {
             <div className="flex items-center justify-between pb-4 border-b border-gray-200 dark:border-gray-700">
               <div>
                 <p className="font-medium text-gray-800 dark:text-white">
-                  AI Transaction Categorization
+                  🤖 AI Transaction Categorization
                 </p>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Auto-categorize transactions (Coming soon)
+                  Automatically categorize your transactions based on
+                  description
                 </p>
               </div>
               <label className="relative inline-flex items-center cursor-pointer">
@@ -189,7 +180,7 @@ export default function Settings() {
                   🌙 Dark Mode
                 </p>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Enable dark theme
+                  Enable dark theme for the app
                 </p>
               </div>
               <label className="relative inline-flex items-center cursor-pointer">
@@ -210,7 +201,7 @@ export default function Settings() {
                   💱 Currency Symbol
                 </p>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Choose your currency
+                  Choose your preferred currency
                 </p>
               </div>
               <select

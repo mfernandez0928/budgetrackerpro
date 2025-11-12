@@ -13,6 +13,7 @@ import Settings from "./pages/Settings";
 import UploadCSV from "./pages/UploadCSV";
 import Auth from "./pages/Auth";
 import ToastContainer from "./components/Toast";
+import Footer from "./components/Footer";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { useStore } from "./store/useStore";
 import { signOut } from "firebase/auth";
@@ -157,44 +158,47 @@ function AppContent() {
   }, [settings.darkMode]);
 
   return (
-    <div className="bg-white dark:bg-gray-900 transition-colors duration-200 min-h-screen">
+    <div className="bg-white dark:bg-gray-900 transition-colors duration-200 min-h-screen flex flex-col">
       <Navbar />
-      <Routes>
-        <Route path="/auth" element={<Auth />} />
-        <Route
-          path="/dashboard"
-          element={
-            <ProtectedRoute>
-              <Dashboard />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/transactions"
-          element={
-            <ProtectedRoute>
-              <Transactions />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/settings"
-          element={
-            <ProtectedRoute>
-              <Settings />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/upload-csv"
-          element={
-            <ProtectedRoute>
-              <UploadCSV />
-            </ProtectedRoute>
-          }
-        />
-        <Route path="/" element={<Navigate to="/dashboard" />} />
-      </Routes>
+      <main className="flex-1">
+        <Routes>
+          <Route path="/auth" element={<Auth />} />
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/transactions"
+            element={
+              <ProtectedRoute>
+                <Transactions />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/settings"
+            element={
+              <ProtectedRoute>
+                <Settings />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/upload-csv"
+            element={
+              <ProtectedRoute>
+                <UploadCSV />
+              </ProtectedRoute>
+            }
+          />
+          <Route path="/" element={<Navigate to="/dashboard" />} />
+        </Routes>
+      </main>
+      <Footer />
       <ToastContainer />
     </div>
   );

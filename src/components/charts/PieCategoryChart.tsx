@@ -45,7 +45,15 @@ export function PieCategoryChart() {
               <Cell key={`cell-${idx}`} fill={entry.color} />
             ))}
           </Pie>
-          <Tooltip formatter={(value: number) => `$${value.toFixed(2)}`} />
+          <Tooltip
+            formatter={(value: number) => `$${value.toFixed(2)}`}
+            contentStyle={{
+              backgroundColor: "#1f2937",
+              border: "1px solid #374151",
+              borderRadius: "8px",
+              color: "#fff",
+            }}
+          />
           <Legend layout="vertical" align="right" verticalAlign="middle" />
         </PieChart>
       </ResponsiveContainer>

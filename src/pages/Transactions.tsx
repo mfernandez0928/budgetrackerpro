@@ -330,9 +330,10 @@ export default function Transactions() {
                           : "text-red-600 dark:text-red-400"
                       }`}
                     >
-                      {tx.amount >= 0 ? "+" : ""}
+                      {tx.amount >= 0 ? "+" : "-"}
                       {formatCurrency(Math.abs(tx.amount), settings.currency)}
                     </td>
+
                     <td className="px-6 py-4 text-center">
                       <button
                         onClick={() => handleEdit(tx)}
