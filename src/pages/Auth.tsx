@@ -19,35 +19,12 @@ export default function Auth() {
     try {
       setLoading(true);
       const provider = new GoogleAuthProvider();
-      await signInWithPopup(auth, provider);
+      const result = await signInWithPopup(auth, provider);
       showToast("✅ Signed in with Google!", "success");
       navigate("/dashboard");
     } catch (error: any) {
+      console.error("Google auth error:", error);
       showToast(`❌ Google sign-in failed: ${error.message}`, "error");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Demo Mode - Uses localStorage (no Firebase)
-  const handleDemoMode = async () => {
-    try {
-      setLoading(true);
-      localStorage.setItem(
-        "testUser",
-        JSON.stringify({
-          uid: "demo-user-" + Date.now(),
-          displayName: "Mark Dev",
-          email: "demo@budgettracker.local",
-          photoURL: "https://via.placeholder.com/40",
-        })
-      );
-      showToast("✅ Demo mode activated!", "success");
-      setTimeout(() => {
-        window.location.href = "/dashboard";
-      }, 500);
-    } catch (error: any) {
-      showToast(`❌ Demo mode failed: ${error.message}`, "error");
     } finally {
       setLoading(false);
     }
@@ -68,19 +45,10 @@ export default function Auth() {
         <button
           onClick={handleGoogleSignIn}
           disabled={loading}
-          className="w-full bg-white dark:bg-gray-700 border-2 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white py-4 rounded-lg font-bold hover:bg-gray-50 dark:hover:bg-gray-600 transition-all disabled:opacity-50 flex items-center justify-center gap-3 text-lg mb-3"
+          className="w-full bg-white dark:bg-gray-700 border-2 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white py-4 rounded-lg font-bold hover:bg-gray-50 dark:hover:bg-gray-600 transition-all disabled:opacity-50 flex items-center justify-center gap-3 text-lg"
         >
           <span className="text-2xl">🔵</span>
           {loading ? "Signing in..." : "Sign in with Google"}
-        </button>
-
-        <button
-          onClick={handleDemoMode}
-          disabled={loading}
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-semibold transition-all disabled:opacity-50 flex items-center justify-center gap-2"
-        >
-          <span>🧪</span>
-          {loading ? "Loading..." : "Demo Mode"}
         </button>
 
         <div className="mt-8 space-y-3 text-sm text-gray-600 dark:text-gray-300">
@@ -98,8 +66,8 @@ export default function Auth() {
 
         <div className="mt-8 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-700">
           <p className="text-sm text-blue-900 dark:text-blue-300">
-            💡 <strong>Demo Mode:</strong> Use anonymously or sign in with
-            Google.
+            💡 <strong>Secure:</strong> All your data is stored locally on your
+            device.
           </p>
         </div>
       </div>
