@@ -28,16 +28,17 @@ interface Store {
   categories: Category[];
   settings: Settings;
 
-  // Your existing functions
   addTransaction: (tx: Omit<Transaction, "id">) => void;
   deleteTransaction: (id: string) => void;
   updateTransaction: (id: string, tx: Partial<Transaction>) => void;
   addCategory: (category: Omit<Category, "id">) => void;
   deleteCategory: (id: string) => void;
+  updateCategory: (id: string, updates: Partial<Category>) => void;
   updateSettings: (settings: Partial<Settings>) => void;
   getCategoryBreakdown: () => any[];
-
-  // NEW FUNCTION - Add this here ✅
+  getTotalIncome: () => number;
+  getTotalExpenses: () => number;
+  getBalance: () => number;
   resetToDefaults: () => void;
 }
 
@@ -64,7 +65,6 @@ export const useStore = create<Store>()(
         startOfMonth: 1,
       },
 
-      // Your existing functions
       addTransaction: (tx) =>
         set((state) => ({
           transactions: [
@@ -98,6 +98,13 @@ export const useStore = create<Store>()(
           categories: state.categories.filter((c) => c.id !== id),
         })),
 
+      updateCategory: (id, updates) =>
+        set((state) => ({
+          categories: state.categories.map((c) =>
+            c.id === id ? { ...c, ...updates } : c
+          ),
+        })),
+
       updateSettings: (settings) =>
         set((state) => ({
           settings: { ...state.settings, ...settings },
@@ -129,7 +136,25 @@ export const useStore = create<Store>()(
         });
       },
 
-      // ✅ NEW FUNCTION - PASTE HERE (with same indentation)
+      getTotalIncome: () => {
+        const state = get();
+        return state.transactions
+          .filter((tx) => tx.amount > 0)
+          .reduce((sum, tx) => sum + tx.amount, 0);
+      },
+
+      getTotalExpenses: () => {
+        const state = get();
+        return state.transactions
+          .filter((tx) => tx.amount < 0)
+          .reduce((sum, tx) => sum + Math.abs(tx.amount), 0);
+      },
+
+      getBalance: () => {
+        const state = get();
+        return state.transactions.reduce((sum, tx) => sum + tx.amount, 0);
+      },
+
       resetToDefaults: () =>
         set({
           transactions: [],
