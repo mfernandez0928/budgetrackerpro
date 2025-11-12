@@ -121,19 +121,22 @@ export const useStore = create<Store>()(
           }
         });
 
-        return Object.entries(categoryTotals).map(([catId, amount]) => {
-          const category = state.categories.find((c) => c.id === catId);
-          const total = Object.values(categoryTotals).reduce(
-            (a, b) => a + b,
-            0
-          );
-          return {
-            name: category?.name || catId,
-            amount,
-            color: category?.color || "#6b7280",
-            percent: total > 0 ? Math.round((amount / total) * 100) : 0,
-          };
-        });
+        return Object.entries(categoryTotals)
+          .map(([catName, amount]) => {
+            const category = state.categories.find((c) => c.name === catName); // ✅ FIX: Search by name
+            const total = Object.values(categoryTotals).reduce(
+              (a, b) => a + b,
+              0
+            );
+            return {
+              name: catName,
+              amount: parseFloat(amount.toFixed(2)),
+              color: category?.color || "#6b7280",
+              percent: total > 0 ? Math.round((amount / total) * 100) : 0,
+            };
+          })
+          .filter((item) => item.amount > 0) // Only show categories with expenses
+          .sort((a, b) => b.amount - a.amount); // Sort by amount descending
       },
 
       getTotalIncome: () => {
