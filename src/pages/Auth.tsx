@@ -39,24 +39,8 @@ export default function Auth() {
   const isLoggedIn = localStorage.getItem("testUser");
 
   if (isLoggedIn) {
-    return (
-      <main className="min-h-screen bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center px-4">
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 max-w-md w-full text-center">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
-            ✅ Logged In!
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400 mb-6">
-            Redirecting to dashboard...
-          </p>
-          <button
-            onClick={handleLogout}
-            className="bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-lg font-semibold"
-          >
-            Logout
-          </button>
-        </div>
-      </main>
-    );
+    window.location.href = "/dashboard";
+    return null;
   }
 
   return (
