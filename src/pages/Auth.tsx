@@ -1,50 +1,63 @@
 import { useState } from "react";
-import {
-  signInWithPopup,
-  GoogleAuthProvider,
-  signInAnonymously,
-} from "firebase/auth";
-import { auth } from "../config/firebase";
-import { showToast } from "../components/Toast";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
+import { showToast } from "../components/Toast";
 
 export default function Auth() {
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuth();
   const [loading, setLoading] = useState(false);
-
-  if (isAuthenticated) {
-    navigate("/dashboard");
-    return null;
-  }
-
-  const handleGoogleSignIn = async () => {
-    try {
-      setLoading(true);
-      const provider = new GoogleAuthProvider();
-      await signInWithPopup(auth, provider);
-      showToast("✅ Signed in with Google!", "success");
-      navigate("/dashboard");
-    } catch (error: any) {
-      showToast(`❌ Google sign-in failed: ${error.message}`, "error");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleTestSignIn = async () => {
     try {
       setLoading(true);
-      await signInAnonymously(auth);
-      showToast("✅ Signed in as test user!", "success");
-      navigate("/dashboard");
+      // Store test user in localStorage
+      localStorage.setItem(
+        "testUser",
+        JSON.stringify({
+          uid: "test-user-" + Date.now(),
+          displayName: "Mark Dev",
+          email: "test@budgettracker.local",
+          photoURL: "https://via.placeholder.com/40",
+        })
+      );
+      showToast("✅ Logged in as test user!", "success");
+      setTimeout(() => {
+        navigate("/dashboard");
+      }, 500);
     } catch (error: any) {
       showToast(`❌ Sign-in failed: ${error.message}`, "error");
     } finally {
       setLoading(false);
     }
   };
+
+  const handleLogout = () => {
+    localStorage.removeItem("testUser");
+    showToast("✅ Logged out!", "success");
+    window.location.reload();
+  };
+
+  const isLoggedIn = localStorage.getItem("testUser");
+
+  if (isLoggedIn) {
+    return (
+      <main className="min-h-screen bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center px-4">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 max-w-md w-full text-center">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
+            ✅ Logged In!
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400 mb-6">
+            Redirecting to dashboard...
+          </p>
+          <button
+            onClick={handleLogout}
+            className="bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-lg font-semibold"
+          >
+            Logout
+          </button>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center px-4">
@@ -59,21 +72,12 @@ export default function Auth() {
         </div>
 
         <button
-          onClick={handleGoogleSignIn}
-          disabled={loading}
-          className="w-full bg-white dark:bg-gray-700 border-2 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white py-4 rounded-lg font-bold hover:bg-gray-50 dark:hover:bg-gray-600 transition-all disabled:opacity-50 flex items-center justify-center gap-3 text-lg mb-3"
-        >
-          <span className="text-2xl">🔵</span>
-          {loading ? "Signing in..." : "Sign in with Google"}
-        </button>
-
-        <button
           onClick={handleTestSignIn}
           disabled={loading}
-          className="w-full bg-gray-600 dark:bg-gray-700 hover:bg-gray-700 dark:hover:bg-gray-600 text-white py-3 rounded-lg font-semibold transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+          className="w-full bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-lg font-bold transition-all disabled:opacity-50 flex items-center justify-center gap-3 text-lg"
         >
           <span>🧪</span>
-          {loading ? "Testing..." : "Test Mode (Skip Login)"}
+          {loading ? "Loading..." : "Enter Demo Mode"}
         </button>
 
         <div className="mt-8 space-y-3 text-sm text-gray-600 dark:text-gray-300">
@@ -91,8 +95,8 @@ export default function Auth() {
 
         <div className="mt-8 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-700">
           <p className="text-sm text-blue-900 dark:text-blue-300">
-            💡 <strong>Test Mode:</strong> Click "Test Mode" to skip Google
-            login for now.
+            💡 <strong>Demo Mode:</strong> All data is stored locally on your
+            device.
           </p>
         </div>
       </div>

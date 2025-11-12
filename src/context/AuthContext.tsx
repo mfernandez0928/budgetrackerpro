@@ -1,10 +1,15 @@
 import { createContext, useContext, type ReactNode } from "react";
-import { useAuthState } from "react-firebase-hooks/auth";
-import { auth } from "../config/firebase";
-import type { User } from "firebase/auth";
+import { useEffect, useState } from "react";
+
+interface User {
+  uid: string;
+  displayName: string | null;
+  email: string | null;
+  photoURL: string | null;
+}
 
 interface AuthContextType {
-  user: User | null | undefined;
+  user: User | null;
   loading: boolean;
   error: Error | undefined;
   isAuthenticated: boolean;
@@ -13,12 +18,26 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, loading, error] = useAuthState(auth);
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Check if test user exists in localStorage
+    const testUser = localStorage.getItem("testUser");
+    if (testUser) {
+      try {
+        setUser(JSON.parse(testUser));
+      } catch (e) {
+        setUser(null);
+      }
+    }
+    setLoading(false);
+  }, []);
 
   const value: AuthContextType = {
     user,
     loading,
-    error,
+    error: undefined,
     isAuthenticated: !!user,
   };
 
