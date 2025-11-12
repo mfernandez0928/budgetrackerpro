@@ -1,69 +1,144 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useStore } from "../store/useStore";
 import { showToast } from "../components/Toast";
 import CategorySettings from "../components/settings/CategorySettings";
 
 export default function Settings() {
   const { transactions, categories, settings, updateSettings } = useStore();
-  const [localSettings, setLocalSettings] = useState(settings);
 
+  // Local state that matches the store
+  const [localSettings, setLocalSettings] = useState({
+    currency: settings.currency,
+    darkMode: settings.darkMode,
+    aiCategorization: settings.aiCategorization,
+    startOfMonth: settings.startOfMonth,
+  });
+
+  // Update local state when store settings change
+  useEffect(() => {
+    setLocalSettings({
+      currency: settings.currency,
+      darkMode: settings.darkMode,
+      aiCategorization: settings.aiCategorization,
+      startOfMonth: settings.startOfMonth,
+    });
+  }, [settings]);
+
+  // Save all settings to store
   const handleSaveSettings = () => {
     updateSettings(localSettings);
     showToast("✅ Settings saved successfully!", "success");
   };
 
-  const handleExport = () => {
-    const data = JSON.stringify(
-      { transactions, categories, settings },
-      null,
-      2
+  // Handle individual setting changes and auto-save
+  const handleCurrencyChange = (value: string) => {
+    setLocalSettings({ ...localSettings, currency: value });
+    updateSettings({ currency: value });
+    showToast("✅ Currency updated!", "success");
+  };
+
+  const handleDarkModeChange = (checked: boolean) => {
+    setLocalSettings({ ...localSettings, darkMode: checked });
+    updateSettings({ darkMode: checked });
+    showToast(
+      checked ? "🌙 Dark mode enabled!" : "☀️ Light mode enabled!",
+      "success"
     );
-    const blob = new Blob([data], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `budget-tracker-${
-      new Date().toISOString().split("T")[0]
-    }.json`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-    showToast("📥 Data exported successfully!", "success");
   };
 
-  const handleCreateBackup = () => {
-    const data = { transactions, categories, settings };
-    localStorage.setItem("budgetBackup", JSON.stringify(data));
-    showToast("💾 Backup created successfully!", "success");
+  const handleAICategorization = (checked: boolean) => {
+    setLocalSettings({ ...localSettings, aiCategorization: checked });
+    updateSettings({ aiCategorization: checked });
+    showToast(
+      checked
+        ? "✅ AI categorization enabled!"
+        : "❌ AI categorization disabled!",
+      "success"
+    );
   };
 
-  const handleRestoreBackup = () => {
-    const backup = localStorage.getItem("budgetBackup");
-    if (backup) {
-      try {
-        const data = JSON.parse(backup);
-        showToast(
-          "↩️ Backup restored successfully! (Reload to apply)",
-          "success"
-        );
-      } catch {
-        showToast("❌ Invalid backup data", "error");
-      }
-    } else {
-      showToast("❌ No backup found", "error");
+  const handleStartOfMonth = (value: number) => {
+    setLocalSettings({ ...localSettings, startOfMonth: value });
+    updateSettings({ startOfMonth: value });
+    showToast("✅ Start of month updated!", "success");
+  };
+
+  // Export functionality
+  const handleExport = () => {
+    try {
+      const data = JSON.stringify(
+        { transactions, categories, settings },
+        null,
+        2
+      );
+      const blob = new Blob([data], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `budget-tracker-${
+        new Date().toISOString().split("T")[0]
+      }.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      showToast("📥 Data exported successfully!", "success");
+    } catch (error) {
+      showToast("❌ Export failed!", "error");
     }
   };
 
+  // Backup functionality
+  const handleCreateBackup = () => {
+    try {
+      const data = { transactions, categories, settings };
+      localStorage.setItem("budgetBackup", JSON.stringify(data));
+      showToast("💾 Backup created successfully!", "success");
+    } catch (error) {
+      showToast("❌ Backup failed!", "error");
+    }
+  };
+
+  // Restore functionality
+  const handleRestoreBackup = () => {
+    try {
+      const backup = localStorage.getItem("budgetBackup");
+      if (!backup) {
+        showToast("❌ No backup found", "error");
+        return;
+      }
+      const data = JSON.parse(backup);
+      if (data.transactions && data.categories && data.settings) {
+        // Update all data via updateSettings (which updates the store)
+        updateSettings(data.settings);
+        showToast(
+          "✅ Backup restored successfully! (Reload to see all changes)",
+          "success"
+        );
+      } else {
+        showToast("❌ Invalid backup data", "error");
+      }
+    } catch (error) {
+      showToast("❌ Restore failed!", "error");
+    }
+  };
+
+  // Start over functionality
   const handleStartOver = () => {
     if (
       confirm(
-        "⚠️ This will delete ALL data. This action cannot be undone. Are you sure?"
+        "⚠️ This will delete ALL data including transactions and categories. This action CANNOT be undone. Are you absolutely sure?"
       )
     ) {
+      // Clear localStorage
       localStorage.removeItem("budget-tracker-storage");
       localStorage.removeItem("budgetBackup");
-      window.location.reload();
+      showToast("🔄 Starting over... Reloading app...", "warning");
+
+      // Reload after a short delay
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
     }
   };
 
@@ -93,19 +168,14 @@ export default function Settings() {
                   AI Transaction Categorization
                 </p>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Auto-categorize transactions
+                  Auto-categorize transactions (Coming soon)
                 </p>
               </div>
               <label className="relative inline-flex items-center cursor-pointer">
                 <input
                   type="checkbox"
                   checked={localSettings.aiCategorization}
-                  onChange={(e) =>
-                    setLocalSettings({
-                      ...localSettings,
-                      aiCategorization: e.target.checked,
-                    })
-                  }
+                  onChange={(e) => handleAICategorization(e.target.checked)}
                   className="sr-only peer"
                 />
                 <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
@@ -126,12 +196,7 @@ export default function Settings() {
                 <input
                   type="checkbox"
                   checked={localSettings.darkMode}
-                  onChange={(e) =>
-                    setLocalSettings({
-                      ...localSettings,
-                      darkMode: e.target.checked,
-                    })
-                  }
+                  onChange={(e) => handleDarkModeChange(e.target.checked)}
                   className="sr-only peer"
                 />
                 <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
@@ -150,13 +215,8 @@ export default function Settings() {
               </div>
               <select
                 value={localSettings.currency}
-                onChange={(e) =>
-                  setLocalSettings({
-                    ...localSettings,
-                    currency: e.target.value,
-                  })
-                }
-                className="border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+                onChange={(e) => handleCurrencyChange(e.target.value)}
+                className="border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent cursor-pointer"
               >
                 <option>$ (USD)</option>
                 <option>₱ (PHP)</option>
@@ -177,26 +237,14 @@ export default function Settings() {
               </div>
               <select
                 value={localSettings.startOfMonth}
-                onChange={(e) =>
-                  setLocalSettings({
-                    ...localSettings,
-                    startOfMonth: parseInt(e.target.value),
-                  })
-                }
-                className="border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+                onChange={(e) => handleStartOfMonth(parseInt(e.target.value))}
+                className="border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent cursor-pointer"
               >
                 <option value="1">1st day</option>
                 <option value="15">15th day</option>
               </select>
             </div>
           </div>
-
-          <button
-            onClick={handleSaveSettings}
-            className="mt-6 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-semibold transition-colors"
-          >
-            ✅ Save Settings
-          </button>
         </div>
 
         {/* Category Settings */}
@@ -209,28 +257,31 @@ export default function Settings() {
           <h2 className="text-xl font-semibold text-gray-800 dark:text-white mb-6">
             📊 Data Management
           </h2>
+          <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+            Export, backup, and manage your data
+          </p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <button
               onClick={handleExport}
-              className="bg-blue-600 hover:bg-blue-700 text-white rounded-lg px-4 py-3 font-semibold transition-colors"
+              className="bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white rounded-lg px-4 py-3 font-semibold transition-all duration-200 flex items-center justify-center gap-2"
             >
               📥 Export All Data
             </button>
             <button
               onClick={handleCreateBackup}
-              className="bg-green-600 hover:bg-green-700 text-white rounded-lg px-4 py-3 font-semibold transition-colors"
+              className="bg-green-600 hover:bg-green-700 active:bg-green-800 text-white rounded-lg px-4 py-3 font-semibold transition-all duration-200 flex items-center justify-center gap-2"
             >
               💾 Create Backup
             </button>
             <button
               onClick={handleRestoreBackup}
-              className="bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg px-4 py-3 font-semibold transition-colors"
+              className="bg-yellow-600 hover:bg-yellow-700 active:bg-yellow-800 text-white rounded-lg px-4 py-3 font-semibold transition-all duration-200 flex items-center justify-center gap-2"
             >
               ↩️ Restore Backup
             </button>
             <button
               onClick={handleStartOver}
-              className="bg-red-600 hover:bg-red-700 text-white rounded-lg px-4 py-3 font-semibold transition-colors"
+              className="bg-red-600 hover:bg-red-700 active:bg-red-800 text-white rounded-lg px-4 py-3 font-semibold transition-all duration-200 flex items-center justify-center gap-2"
             >
               🔄 Start Over
             </button>

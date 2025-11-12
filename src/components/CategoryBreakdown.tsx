@@ -1,7 +1,8 @@
 import { useStore } from "../store/useStore";
+import { formatCurrency } from "../utils/currency";
 
 export default function CategoryBreakdown() {
-  const { getCategoryBreakdown } = useStore();
+  const { getCategoryBreakdown, settings } = useStore();
   const breakdown = getCategoryBreakdown();
 
   if (breakdown.length === 0) {
@@ -52,7 +53,7 @@ export default function CategoryBreakdown() {
                 </span>
               </td>
               <td className="py-3 px-4 text-right text-gray-800 dark:text-gray-200 font-medium">
-                ${row.amount.toFixed(2)}
+                {formatCurrency(row.amount, settings.currency)}
               </td>
               <td className="py-3 px-4 text-right text-gray-800 dark:text-gray-200 font-medium">
                 {row.percent}%
