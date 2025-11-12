@@ -1,5 +1,9 @@
 import { useState } from "react";
-import { signInWithPopup, GoogleAuthProvider } from "firebase/auth";
+import {
+  signInWithPopup,
+  GoogleAuthProvider,
+  signInAnonymously,
+} from "firebase/auth";
 import { auth } from "../config/firebase";
 import { showToast } from "../components/Toast";
 import { useNavigate } from "react-router-dom";
@@ -10,13 +14,11 @@ export default function Auth() {
   const { isAuthenticated } = useAuth();
   const [loading, setLoading] = useState(false);
 
-  // Redirect if already authenticated
   if (isAuthenticated) {
     navigate("/dashboard");
     return null;
   }
 
-  // Google Sign-In
   const handleGoogleSignIn = async () => {
     try {
       setLoading(true);
@@ -26,6 +28,20 @@ export default function Auth() {
       navigate("/dashboard");
     } catch (error: any) {
       showToast(`❌ Google sign-in failed: ${error.message}`, "error");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Test Mode - Sign in anonymously
+  const handleTestSignIn = async () => {
+    try {
+      setLoading(true);
+      await signInAnonymously(auth);
+      showToast("✅ Signed in as test user!", "success");
+      navigate("/dashboard");
+    } catch (error: any) {
+      showToast(`❌ Sign-in failed: ${error.message}`, "error");
     } finally {
       setLoading(false);
     }
@@ -48,10 +64,20 @@ export default function Auth() {
         <button
           onClick={handleGoogleSignIn}
           disabled={loading}
-          className="w-full bg-white dark:bg-gray-700 border-2 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white py-4 rounded-lg font-bold hover:bg-gray-50 dark:hover:bg-gray-600 transition-all disabled:opacity-50 flex items-center justify-center gap-3 text-lg"
+          className="w-full bg-white dark:bg-gray-700 border-2 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white py-4 rounded-lg font-bold hover:bg-gray-50 dark:hover:bg-gray-600 transition-all disabled:opacity-50 flex items-center justify-center gap-3 text-lg mb-3"
         >
           <span className="text-2xl">🔵</span>
           {loading ? "Signing in..." : "Sign in with Google"}
+        </button>
+
+        {/* Test Mode - Anonymous Sign-In */}
+        <button
+          onClick={handleTestSignIn}
+          disabled={loading}
+          className="w-full bg-gray-600 dark:bg-gray-700 hover:bg-gray-700 dark:hover:bg-gray-600 text-white py-3 rounded-lg font-semibold transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+        >
+          <span>🧪</span>
+          {loading ? "Testing..." : "Test Mode (Skip Login)"}
         </button>
 
         {/* Features */}
@@ -71,8 +97,8 @@ export default function Auth() {
         {/* Info Box */}
         <div className="mt-8 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-700">
           <p className="text-sm text-blue-900 dark:text-blue-300">
-            💡 <strong>Secure:</strong> All data is stored locally on your
-            device.
+            💡 <strong>Test Mode:</strong> Click "Test Mode" to skip Google
+            login for now.
           </p>
         </div>
       </div>
