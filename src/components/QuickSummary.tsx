@@ -1,17 +1,17 @@
 export default function QuickSummary() {
   return (
-    <div className="flex flex-wrap gap-7 mt-4">
-      <div className="flex-1 min-w-[180px] bg-green-50 p-5 rounded-xl shadow flex flex-col items-center">
-        <span className="text-green-600 font-bold text-2xl">$4,500.00</span>
-        <span className="text-gray-600">Income</span>
+    <div className="w-full grid grid-cols-1 md:grid-cols-3 gap-6 bg-transparent mt-8">
+      <div className="rounded-xl p-6 bg-green-50 flex flex-col items-center shadow">
+        <span className="text-lg text-gray-500">Income</span>
+        <span className="text-2xl font-semibold text-green-700">$4,500.00</span>
       </div>
-      <div className="flex-1 min-w-[180px] bg-red-50 p-5 rounded-xl shadow flex flex-col items-center">
-        <span className="text-red-600 font-bold text-2xl">$3,300.00</span>
-        <span className="text-gray-600">Expenses</span>
+      <div className="rounded-xl p-6 bg-red-50 flex flex-col items-center shadow">
+        <span className="text-lg text-gray-500">Expenses</span>
+        <span className="text-2xl font-semibold text-red-700">$3,300.00</span>
       </div>
-      <div className="flex-1 min-w-[180px] bg-blue-50 p-5 rounded-xl shadow flex flex-col items-center">
-        <span className="text-blue-600 font-bold text-2xl">$1,200.00</span>
-        <span className="text-gray-600">Balance</span>
+      <div className="rounded-xl p-6 bg-blue-50 flex flex-col items-center shadow">
+        <span className="text-lg text-gray-500">Balance</span>
+        <span className="text-2xl font-semibold text-blue-700">$1,200.00</span>
       </div>
     </div>
   );

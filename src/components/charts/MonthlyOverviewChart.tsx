@@ -8,7 +8,7 @@ import {
   Legend,
 } from "recharts";
 
-const barData = [
+const data = [
   { name: "Jan", income: 3500, expenses: 3000 },
   { name: "Feb", income: 3700, expenses: 3200 },
   { name: "Mar", income: 4100, expenses: 3400 },
@@ -21,7 +21,7 @@ export function MonthlyOverviewChart() {
   return (
     <>
       <h2 className="font-semibold text-base mb-4">Monthly Overview</h2>
-      <BarChart width={450} height={220} data={barData}>
+      <BarChart width={430} height={220} data={data}>
         <CartesianGrid strokeDasharray="3 3" />
         <XAxis dataKey="name" />
         <YAxis />

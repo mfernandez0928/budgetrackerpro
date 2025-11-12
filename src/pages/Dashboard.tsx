@@ -1,24 +1,26 @@
-import {
-  MonthlyOverviewChart,
-  PieCategoryChart,
-} from "../components/charts/Charts";
+import { MonthlyOverviewChart } from "../components/charts/MonthlyOverviewChart";
+import { PieCategoryChart } from "../components/charts/PieCategoryChart";
 import CategoryBreakdown from "../components/CategoryBreakdown";
 import QuickSummary from "../components/QuickSummary";
 
-const Dashboard = () => (
-  <main className="p-8 max-w-6xl mx-auto">
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-7">
-      <div className="bg-white p-5 rounded-xl shadow">
-        <MonthlyOverviewChart />
+export default function Dashboard() {
+  return (
+    <main className="max-w-7xl mx-auto px-4 py-6">
+      {/* Chart Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-7">
+        <div className="bg-white rounded-xl shadow p-6">
+          <MonthlyOverviewChart />
+        </div>
+        <div className="bg-white rounded-xl shadow p-6">
+          <PieCategoryChart />
+        </div>
       </div>
-      <div className="bg-white p-5 rounded-xl shadow">
-        <PieCategoryChart />
+      {/* Category Breakdown Table */}
+      <div className="bg-white rounded-xl shadow p-6 mb-7">
+        <CategoryBreakdown />
       </div>
-    </div>
-    <div className="mb-7">
-      <CategoryBreakdown />
-    </div>
-    <QuickSummary />
-  </main>
-);
-export default Dashboard;
+      {/* Quick Summary Cards */}
+      <QuickSummary />
+    </main>
+  );
+}

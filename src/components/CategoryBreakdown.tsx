@@ -1,35 +1,38 @@
-const tableData = [
-  { category: "Housing", amount: 1200, percent: 36 },
-  { category: "Food", amount: 800, percent: 24 },
-  { category: "Transportation", amount: 400, percent: 12 },
-  { category: "Utilities", amount: 300, percent: 9 },
-  { category: "Entertainment", amount: 400, percent: 12 },
-  { category: "Healthcare", amount: 200, percent: 6 },
-  { category: "Other", amount: 100, percent: 3 },
+const categories = [
+  { name: "Housing", amount: 1200, percent: 36 },
+  { name: "Food", amount: 800, percent: 24 },
+  { name: "Transportation", amount: 400, percent: 12 },
+  { name: "Utilities", amount: 300, percent: 9 },
+  { name: "Entertainment", amount: 400, percent: 12 },
+  { name: "Healthcare", amount: 200, percent: 6 },
+  { name: "Other", amount: 100, percent: 3 },
 ];
 
 export default function CategoryBreakdown() {
   return (
-    <div className="bg-white p-6 rounded-xl shadow">
-      <h2 className="font-bold mb-4">Category Breakdown</h2>
+    <>
+      <h3 className="text-md font-semibold mb-2">Category Breakdown</h3>
       <table className="w-full text-sm">
         <thead>
-          <tr className="text-gray-500 border-b">
-            <th className="text-left pb-2">Category</th>
-            <th className="text-right pb-2">Amount</th>
-            <th className="text-right pb-2">% of Total</th>
+          <tr className="text-slate-500 border-b">
+            <th className="text-left pb-2">CATEGORY</th>
+            <th className="text-right pb-2">AMOUNT</th>
+            <th className="text-right pb-2">% OF TOTAL</th>
           </tr>
         </thead>
         <tbody>
-          {tableData.map((row) => (
-            <tr key={row.category} className="border-b last:border-none">
-              <td className="py-2">{row.category}</td>
-              <td className="py-2 text-right">${row.amount.toFixed(2)}</td>
-              <td className="py-2 text-right">{row.percent}%</td>
+          {categories.map((row) => (
+            <tr key={row.name} className="border-b last:border-b-0">
+              <td className="py-3 flex items-center gap-2">
+                <span className="inline-block w-2 h-2 rounded-full bg-blue-500"></span>
+                {row.name}
+              </td>
+              <td className="py-3 text-right">${row.amount.toFixed(2)}</td>
+              <td className="py-3 text-right">{row.percent}%</td>
             </tr>
           ))}
         </tbody>
       </table>
-    </div>
+    </>
   );
 }
