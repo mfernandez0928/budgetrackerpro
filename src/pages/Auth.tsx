@@ -1,47 +1,50 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import {
+  signInAnonymously,
+  signInWithPopup,
+  GoogleAuthProvider,
+} from "firebase/auth";
+import { auth } from "../config/firebase";
 import { showToast } from "../components/Toast";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 export default function Auth() {
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
   const [loading, setLoading] = useState(false);
 
-  const handleTestSignIn = async () => {
+  if (isAuthenticated) {
+    navigate("/dashboard");
+    return null;
+  }
+
+  const handleGoogleSignIn = async () => {
     try {
       setLoading(true);
-      // Store test user in localStorage
-      localStorage.setItem(
-        "testUser",
-        JSON.stringify({
-          uid: "test-user-" + Date.now(),
-          displayName: "Mark Dev",
-          email: "test@budgettracker.local",
-          photoURL: "https://via.placeholder.com/40",
-        })
-      );
-      showToast("✅ Logged in as test user!", "success");
-      setTimeout(() => {
-        navigate("/dashboard");
-      }, 500);
+      const provider = new GoogleAuthProvider();
+      await signInWithPopup(auth, provider);
+      showToast("✅ Signed in with Google!", "success");
+      navigate("/dashboard");
+    } catch (error: any) {
+      showToast(`❌ Google sign-in failed: ${error.message}`, "error");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAnonymousSignIn = async () => {
+    try {
+      setLoading(true);
+      await signInAnonymously(auth);
+      showToast("✅ Demo mode activated!", "success");
+      navigate("/dashboard");
     } catch (error: any) {
       showToast(`❌ Sign-in failed: ${error.message}`, "error");
     } finally {
       setLoading(false);
     }
   };
-
-  const handleLogout = () => {
-    localStorage.removeItem("testUser");
-    showToast("✅ Logged out!", "success");
-    window.location.reload();
-  };
-
-  const isLoggedIn = localStorage.getItem("testUser");
-
-  if (isLoggedIn) {
-    window.location.href = "/dashboard";
-    return null;
-  }
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center px-4">
@@ -56,12 +59,21 @@ export default function Auth() {
         </div>
 
         <button
-          onClick={handleTestSignIn}
+          onClick={handleGoogleSignIn}
           disabled={loading}
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-lg font-bold transition-all disabled:opacity-50 flex items-center justify-center gap-3 text-lg"
+          className="w-full bg-white dark:bg-gray-700 border-2 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white py-4 rounded-lg font-bold hover:bg-gray-50 dark:hover:bg-gray-600 transition-all disabled:opacity-50 flex items-center justify-center gap-3 text-lg mb-3"
+        >
+          <span className="text-2xl">🔵</span>
+          {loading ? "Signing in..." : "Sign in with Google"}
+        </button>
+
+        <button
+          onClick={handleAnonymousSignIn}
+          disabled={loading}
+          className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-semibold transition-all disabled:opacity-50 flex items-center justify-center gap-2"
         >
           <span>🧪</span>
-          {loading ? "Loading..." : "Enter Demo Mode"}
+          {loading ? "Loading..." : "Demo Mode"}
         </button>
 
         <div className="mt-8 space-y-3 text-sm text-gray-600 dark:text-gray-300">
@@ -79,8 +91,8 @@ export default function Auth() {
 
         <div className="mt-8 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-700">
           <p className="text-sm text-blue-900 dark:text-blue-300">
-            💡 <strong>Demo Mode:</strong> All data is stored locally on your
-            device.
+            💡 <strong>Demo Mode:</strong> Use anonymously or sign in with
+            Google.
           </p>
         </div>
       </div>
