@@ -33,7 +33,6 @@ export default function Auth() {
     }
   };
 
-  // Test Mode - Sign in anonymously
   const handleTestSignIn = async () => {
     try {
       setLoading(true);
@@ -50,7 +49,6 @@ export default function Auth() {
   return (
     <main className="min-h-screen bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center px-4">
       <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 max-w-md w-full">
-        {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">
             🎯 BudgetTracker Pro
@@ -60,7 +58,6 @@ export default function Auth() {
           </p>
         </div>
 
-        {/* Google Sign-In */}
         <button
           onClick={handleGoogleSignIn}
           disabled={loading}
@@ -70,7 +67,6 @@ export default function Auth() {
           {loading ? "Signing in..." : "Sign in with Google"}
         </button>
 
-        {/* Test Mode - Anonymous Sign-In */}
         <button
           onClick={handleTestSignIn}
           disabled={loading}
@@ -80,7 +76,6 @@ export default function Auth() {
           {loading ? "Testing..." : "Test Mode (Skip Login)"}
         </button>
 
-        {/* Features */}
         <div className="mt-8 space-y-3 text-sm text-gray-600 dark:text-gray-300">
           <h3 className="font-semibold text-gray-800 dark:text-white">
             ✨ Features:
@@ -94,7 +89,6 @@ export default function Auth() {
           </div>
         </div>
 
-        {/* Info Box */}
         <div className="mt-8 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-700">
           <p className="text-sm text-blue-900 dark:text-blue-300">
             💡 <strong>Test Mode:</strong> Click "Test Mode" to skip Google
