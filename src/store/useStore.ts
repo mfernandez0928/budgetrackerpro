@@ -106,9 +106,7 @@ export const useStore = create<Store>()(
         })),
 
       updateSettings: (settings) =>
-        set((state) => ({
-          settings: { ...state.settings, ...settings },
-        })),
+        set((state) => ({ settings: { ...state.settings, ...settings } })),
 
       getCategoryBreakdown: () => {
         const state = get();
@@ -123,7 +121,7 @@ export const useStore = create<Store>()(
 
         return Object.entries(categoryTotals)
           .map(([catName, amount]) => {
-            const category = state.categories.find((c) => c.name === catName); // ✅ FIX: Search by name
+            const category = state.categories.find((c) => c.name === catName);
             const total = Object.values(categoryTotals).reduce(
               (a, b) => a + b,
               0
@@ -135,8 +133,8 @@ export const useStore = create<Store>()(
               percent: total > 0 ? Math.round((amount / total) * 100) : 0,
             };
           })
-          .filter((item) => item.amount > 0) // Only show categories with expenses
-          .sort((a, b) => b.amount - a.amount); // Sort by amount descending
+          .filter((item) => item.amount > 0)
+          .sort((a, b) => b.amount - a.amount);
       },
 
       getTotalIncome: () => {
