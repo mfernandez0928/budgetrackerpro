@@ -102,10 +102,45 @@ function Navbar() {
                 >
                   Upload CSV
                 </Link>
+
+                {/* Mobile User Section */}
+                <div className="border-t border-gray-200 dark:border-gray-600 pt-4 mt-4">
+                  <div className="flex items-center gap-3 px-2">
+                    <img
+                      src={user?.photoURL || "https://via.placeholder.com/40"}
+                      alt={user?.displayName || "User"}
+                      className="w-8 h-8 rounded-full"
+                    />
+                    <div className="flex flex-col">
+                      <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                        {user?.displayName || user?.email?.split("@")[0]}
+                      </span>
+                      <span className="text-xs text-gray-500 dark:text-gray-400">
+                        {user?.email}
+                      </span>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      navigate("/settings");
+                    }}
+                    className="w-full mt-3 px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors flex items-center gap-2 rounded"
+                  >
+                    ⚙️ Settings
+                  </button>
+                  <button
+                    onClick={handleLogout}
+                    className="w-full px-4 py-2 mt-1 text-left text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors flex items-center gap-2 rounded"
+                  >
+                    🚪 Logout
+                  </button>
+                </div>
               </nav>
             )}
 
-            {/* User Dropdown */}
+            {/* User Dropdown (desktop) */}
             <div className="relative ml-6 hidden md:block">
               <button
                 onClick={() => setDropdownOpen(!dropdownOpen)}
