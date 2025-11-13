@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useAuth } from "./context/AuthContext";
 import { signOut } from "firebase/auth";
 import { auth } from "./config/firebase";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom"; // Import Link
 import { showToast } from "./components/Toast";
 
 function Navbar() {
@@ -44,24 +44,24 @@ function Navbar() {
           <>
             {/* Desktop Links */}
             <nav className="hidden md:flex gap-8 items-center">
-              <a
-                href="/dashboard"
+              <Link
+                to="/dashboard"
                 className="text-gray-600 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400 font-medium transition"
               >
                 Dashboard
-              </a>
-              <a
-                href="/transactions"
+              </Link>
+              <Link
+                to="/transactions"
                 className="text-gray-600 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400 font-medium transition"
               >
                 Transactions
-              </a>
-              <a
-                href="/upload-csv"
+              </Link>
+              <Link
+                to="/upload-csv"
                 className="text-gray-600 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400 font-medium transition"
               >
                 Upload CSV
-              </a>
+              </Link>
             </nav>
 
             {/* Mobile Hamburger */}
@@ -77,27 +77,27 @@ function Navbar() {
             {/* Mobile menu */}
             {mobileMenuOpen && (
               <nav className="absolute top-full left-0 w-full bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 flex flex-col gap-4 px-4 py-4 z-50 md:hidden">
-                <a
-                  href="/dashboard"
+                <Link
+                  to="/dashboard"
                   onClick={() => setMobileMenuOpen(false)}
                   className="text-gray-600 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400 font-medium transition"
                 >
                   Dashboard
-                </a>
-                <a
-                  href="/transactions"
+                </Link>
+                <Link
+                  to="/transactions"
                   onClick={() => setMobileMenuOpen(false)}
                   className="text-gray-600 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400 font-medium transition"
                 >
                   Transactions
-                </a>
-                <a
-                  href="/upload-csv"
+                </Link>
+                <Link
+                  to="/upload-csv"
                   onClick={() => setMobileMenuOpen(false)}
                   className="text-gray-600 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400 font-medium transition"
                 >
                   Upload CSV
-                </a>
+                </Link>
 
                 {/* Mobile User Dropdown can be added here if needed */}
               </nav>
