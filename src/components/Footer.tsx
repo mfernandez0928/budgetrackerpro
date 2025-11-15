@@ -43,11 +43,6 @@ export default function Footer() {
             </a>
           </div>
         </div>
-
-        {/* Bottom Line */}
-        <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700 text-center">
-          <p className="text-xs text-gray-500 dark:text-gray-500">MarkDev</p>
-        </div>
       </div>
     </footer>
   );
