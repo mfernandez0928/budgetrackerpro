@@ -38,7 +38,11 @@ function Navbar() {
       <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between relative">
         {/* Logo */}
         <div className="flex items-center gap-3">
-          <span className="text-2xl">📊</span>
+          <img
+            src="/public/BTP.png"
+            alt="BudgetTracker Pro Logo"
+            className="w-8 h-8 object-contain"
+          />
           <h1 className="text-xl font-bold text-gray-900 dark:text-white">
             BudgetTracker Pro
           </h1>
