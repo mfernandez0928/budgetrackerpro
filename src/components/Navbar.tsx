@@ -39,7 +39,7 @@ function Navbar() {
         {/* Logo */}
         <div className="flex items-center gap-3">
           <img
-            src="public/BTP.png"
+            src="/BTP.png"
             alt="BudgetTracker Pro Logo"
             className="w-8 h-8 object-contain"
           />
