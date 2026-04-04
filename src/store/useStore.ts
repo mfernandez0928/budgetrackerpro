@@ -1,186 +1,306 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { createJSONStorage, persist } from "zustand/middleware";
+import type {
+  BudgetStoreSnapshot,
+  BudgetStoreState,
+  Category,
+  Transaction,
+} from "../types/finance";
+import {
+  advanceRecurringDate,
+  createDefaultSnapshot,
+  createId,
+  normalizeCurrencyCode,
+} from "../lib/finance";
+import { getTodayISO } from "../lib/date";
 
-interface Category {
-  id: string;
-  name: string;
-  color: string;
-  emoji: string;
+function migrateLegacyState(persistedState: unknown): BudgetStoreSnapshot {
+  const defaults = createDefaultSnapshot();
+  const state = (persistedState ?? {}) as Record<string, unknown>;
+
+  if (Array.isArray((state as BudgetStoreSnapshot).accounts)) {
+    return {
+      ...defaults,
+      ...(state as BudgetStoreSnapshot),
+    };
+  }
+
+  const legacyCategories: Category[] = Array.isArray(state.categories)
+    ? (state.categories as Array<Record<string, string>>).map((category) => ({
+        id: category.id ?? createId("cat"),
+        name: category.name ?? "Other",
+        color: category.color ?? "#6b7280",
+        icon: "dots",
+        type: (category.name === "Income" ? "income" : "expense") as
+          | "income"
+          | "expense",
+      }))
+    : defaults.categories;
+
+  const categoryByName = new Map(
+    legacyCategories.map((category) => [category.name.toLowerCase(), category.id])
+  );
+
+  const transactions: Transaction[] = Array.isArray(state.transactions)
+    ? (state.transactions as Array<Record<string, unknown>>).map((transaction) => {
+        const amount = Number(transaction.amount ?? 0);
+        const type = (amount > 0 ? "income" : "expense") as "income" | "expense";
+        return {
+          id: String(transaction.id ?? createId("tx")),
+          createdAt: new Date().toISOString(),
+          title: String(transaction.description ?? "Imported transaction"),
+          amount: Math.abs(amount),
+          type,
+          date: String(transaction.date ?? getTodayISO()),
+          categoryId:
+            categoryByName.get(String(transaction.category ?? "other").toLowerCase()) ??
+            legacyCategories.find((category) => category.type === type)?.id ??
+            legacyCategories[0]?.id ??
+            "other",
+          accountId: defaults.accounts[0].id,
+          paymentMethod: "cash" as const,
+          notes: "",
+          status: "cleared" as const,
+        };
+      })
+    : [];
+
+  return {
+    ...defaults,
+    categories: legacyCategories,
+    transactions,
+    settings: {
+      ...defaults.settings,
+      currencyCode: normalizeCurrencyCode(
+        (state.settings as Record<string, string> | undefined)?.currency
+      ),
+      themeMode:
+        (state.settings as Record<string, boolean> | undefined)?.darkMode === true
+          ? "dark"
+          : "system",
+      startOfMonth: Number(
+        (state.settings as Record<string, number> | undefined)?.startOfMonth ?? 1
+      ),
+    },
+    profile: {
+      hasCompletedOnboarding: transactions.length > 0,
+    },
+  };
 }
 
-interface Transaction {
-  id: string;
-  date: string;
-  description: string;
-  amount: number;
-  category: string;
+function mergeSnapshot(
+  current: BudgetStoreSnapshot,
+  incoming: Partial<BudgetStoreSnapshot>
+): BudgetStoreSnapshot {
+  return {
+    transactions: incoming.transactions ?? current.transactions,
+    categories: incoming.categories ?? current.categories,
+    accounts: incoming.accounts ?? current.accounts,
+    budgets: incoming.budgets ?? current.budgets,
+    savingsGoals: incoming.savingsGoals ?? current.savingsGoals,
+    recurringBills: incoming.recurringBills ?? current.recurringBills,
+    settings: incoming.settings ? { ...current.settings, ...incoming.settings } : current.settings,
+    profile: incoming.profile ? { ...current.profile, ...incoming.profile } : current.profile,
+  };
 }
 
-interface Settings {
-  currency: string;
-  darkMode: boolean;
-  aiCategorization: boolean;
-  startOfMonth: number;
-}
-
-interface Store {
-  transactions: Transaction[];
-  categories: Category[];
-  settings: Settings;
-
-  addTransaction: (tx: Omit<Transaction, "id">) => void;
-  deleteTransaction: (id: string) => void;
-  updateTransaction: (id: string, tx: Partial<Transaction>) => void;
-  addCategory: (category: Omit<Category, "id">) => void;
-  deleteCategory: (id: string) => void;
-  updateCategory: (id: string, updates: Partial<Category>) => void;
-  updateSettings: (settings: Partial<Settings>) => void;
-  getCategoryBreakdown: () => any[];
-  getTotalIncome: () => number;
-  getTotalExpenses: () => number;
-  getBalance: () => number;
-  resetToDefaults: () => void;
-}
-
-export const useStore = create<Store>()(
+export const useStore = create<BudgetStoreState>()(
   persist(
-    (set, get) => ({
-      transactions: [],
-      categories: [
-        { id: "income", name: "Income", color: "#4ade80", emoji: "💰" },
-        { id: "housing", name: "Housing", color: "#3b82f6", emoji: "🏠" },
-        { id: "food", name: "Food", color: "#fbbf24", emoji: "🍔" },
-        {
-          id: "transportation",
-          name: "Transportation",
-          color: "#a78bfa",
-          emoji: "🚗",
-        },
-        { id: "other", name: "Other", color: "#6b7280", emoji: "📦" },
-      ],
-      settings: {
-        currency: "$ (USD)",
-        darkMode: false,
-        aiCategorization: false,
-        startOfMonth: 1,
-      },
+    (set) => ({
+      ...createDefaultSnapshot(),
 
-      addTransaction: (tx) =>
+      addTransaction: (transaction) =>
         set((state) => ({
           transactions: [
+            {
+              ...transaction,
+              id: createId("tx"),
+              createdAt: new Date().toISOString(),
+            },
             ...state.transactions,
-            { ...tx, id: Date.now().toString() },
           ],
+          profile: {
+            hasCompletedOnboarding: true,
+          },
         })),
 
-      deleteTransaction: (id) =>
+      updateTransaction: (transactionId, updates) =>
         set((state) => ({
-          transactions: state.transactions.filter((t) => t.id !== id),
-        })),
-
-      updateTransaction: (id, updates) =>
-        set((state) => ({
-          transactions: state.transactions.map((t) =>
-            t.id === id ? { ...t, ...updates } : t
+          transactions: state.transactions.map((transaction) =>
+            transaction.id === transactionId
+              ? { ...transaction, ...updates }
+              : transaction
           ),
+        })),
+
+      deleteTransaction: (transactionId) =>
+        set((state) => ({
+          transactions: state.transactions.filter(
+            (transaction) => transaction.id !== transactionId
+          ),
+        })),
+
+      upsertBudget: (budget) =>
+        set((state) => {
+          const existingBudget = state.budgets.find(
+            (item) =>
+              item.month === budget.month && item.categoryId === budget.categoryId
+          );
+          if (existingBudget) {
+            return {
+              budgets: state.budgets.map((item) =>
+                item.id === existingBudget.id ? { ...item, ...budget } : item
+              ),
+            };
+          }
+          return {
+            budgets: [...state.budgets, { ...budget, id: createId("budget") }],
+          };
+        }),
+
+      deleteBudget: (budgetId) =>
+        set((state) => ({
+          budgets: state.budgets.filter((budget) => budget.id !== budgetId),
+        })),
+
+      addSavingsGoal: (goal) =>
+        set((state) => ({
+          savingsGoals: [...state.savingsGoals, { ...goal, id: createId("goal") }],
+          profile: {
+            hasCompletedOnboarding: true,
+          },
+        })),
+
+      updateSavingsGoal: (goalId, updates) =>
+        set((state) => ({
+          savingsGoals: state.savingsGoals.map((goal) =>
+            goal.id === goalId ? { ...goal, ...updates } : goal
+          ),
+        })),
+
+      deleteSavingsGoal: (goalId) =>
+        set((state) => ({
+          savingsGoals: state.savingsGoals.filter((goal) => goal.id !== goalId),
+        })),
+
+      addRecurringBill: (bill) =>
+        set((state) => ({
+          recurringBills: [...state.recurringBills, { ...bill, id: createId("bill") }],
+          profile: {
+            hasCompletedOnboarding: true,
+          },
+        })),
+
+      updateRecurringBill: (billId, updates) =>
+        set((state) => ({
+          recurringBills: state.recurringBills.map((bill) =>
+            bill.id === billId ? { ...bill, ...updates } : bill
+          ),
+        })),
+
+      deleteRecurringBill: (billId) =>
+        set((state) => ({
+          recurringBills: state.recurringBills.filter((bill) => bill.id !== billId),
+        })),
+
+      markRecurringBillPaid: (billId, paidDate = getTodayISO()) =>
+        set((state) => {
+          const bill = state.recurringBills.find((item) => item.id === billId);
+          if (!bill) return state;
+
+          const paidTransaction: Transaction = {
+            id: createId("tx"),
+            createdAt: new Date().toISOString(),
+            title: bill.title,
+            amount: bill.amount,
+            type: bill.type,
+            date: paidDate,
+            categoryId: bill.categoryId,
+            accountId: bill.accountId,
+            paymentMethod: bill.paymentMethod,
+            notes: bill.notes,
+            recurringId: bill.id,
+            isRecurringInstance: true,
+            status: "cleared",
+          };
+
+          return {
+            transactions: [paidTransaction, ...state.transactions],
+            recurringBills: state.recurringBills.map((item) =>
+              item.id === billId ? advanceRecurringDate(item, paidDate) : item
+            ),
+          };
+        }),
+
+      addAccount: (account) =>
+        set((state) => ({
+          accounts: [...state.accounts, { ...account, id: createId("acct") }],
+        })),
+
+      updateAccount: (accountId, updates) =>
+        set((state) => ({
+          accounts: state.accounts.map((account) =>
+            account.id === accountId ? { ...account, ...updates } : account
+          ),
+        })),
+
+      deleteAccount: (accountId) =>
+        set((state) => ({
+          accounts: state.accounts.filter((account) => account.id !== accountId),
         })),
 
       addCategory: (category) =>
         set((state) => ({
-          categories: [
-            ...state.categories,
-            { ...category, id: Date.now().toString() },
-          ],
+          categories: [...state.categories, { ...category, id: createId("cat") }],
         })),
 
-      deleteCategory: (id) =>
+      updateCategory: (categoryId, updates) =>
         set((state) => ({
-          categories: state.categories.filter((c) => c.id !== id),
-        })),
-
-      updateCategory: (id, updates) =>
-        set((state) => ({
-          categories: state.categories.map((c) =>
-            c.id === id ? { ...c, ...updates } : c
+          categories: state.categories.map((category) =>
+            category.id === categoryId ? { ...category, ...updates } : category
           ),
         })),
 
-      updateSettings: (settings) =>
-        set((state) => ({ settings: { ...state.settings, ...settings } })),
+      deleteCategory: (categoryId) =>
+        set((state) => ({
+          categories: state.categories.filter((category) => category.id !== categoryId),
+        })),
 
-      getCategoryBreakdown: () => {
-        const state = get();
-        const categoryTotals: { [key: string]: number } = {};
-
-        state.transactions.forEach((tx) => {
-          if (tx.amount < 0) {
-            categoryTotals[tx.category] =
-              (categoryTotals[tx.category] || 0) + Math.abs(tx.amount);
-          }
-        });
-
-        return Object.entries(categoryTotals)
-          .map(([catName, amount]) => {
-            const category = state.categories.find((c) => c.name === catName);
-            const total = Object.values(categoryTotals).reduce(
-              (a, b) => a + b,
-              0
-            );
-            return {
-              name: catName,
-              amount: parseFloat(amount.toFixed(2)),
-              color: category?.color || "#6b7280",
-              percent: total > 0 ? Math.round((amount / total) * 100) : 0,
-            };
-          })
-          .filter((item) => item.amount > 0)
-          .sort((a, b) => b.amount - a.amount);
-      },
-
-      getTotalIncome: () => {
-        const state = get();
-        return state.transactions
-          .filter((tx) => tx.amount > 0)
-          .reduce((sum, tx) => sum + tx.amount, 0);
-      },
-
-      getTotalExpenses: () => {
-        const state = get();
-        return state.transactions
-          .filter((tx) => tx.amount < 0)
-          .reduce((sum, tx) => sum + Math.abs(tx.amount), 0);
-      },
-
-      getBalance: () => {
-        const state = get();
-        return state.transactions.reduce((sum, tx) => sum + tx.amount, 0);
-      },
-
-      resetToDefaults: () =>
-        set({
-          transactions: [],
-          categories: [
-            { id: "income", name: "Income", color: "#4ade80", emoji: "💰" },
-            { id: "housing", name: "Housing", color: "#3b82f6", emoji: "🏠" },
-            { id: "food", name: "Food", color: "#fbbf24", emoji: "🍔" },
-            {
-              id: "transportation",
-              name: "Transportation",
-              color: "#a78bfa",
-              emoji: "🚗",
-            },
-            { id: "other", name: "Other", color: "#6b7280", emoji: "📦" },
-          ],
+      updateSettings: (updates) =>
+        set((state) => ({
           settings: {
-            currency: "$ (USD)",
-            darkMode: false,
-            aiCategorization: false,
-            startOfMonth: 1,
+            ...state.settings,
+            ...updates,
           },
-        }),
+        })),
+
+      completeOnboarding: () =>
+        set(() => ({
+          profile: {
+            hasCompletedOnboarding: true,
+          },
+        })),
+
+      importSnapshot: (snapshot) =>
+        set((state) => mergeSnapshot(state, snapshot)),
+
+      resetToDefaults: () => set(() => createDefaultSnapshot()),
     }),
     {
       name: "budget-tracker-storage",
+      version: 2,
+      storage: createJSONStorage(() => localStorage),
+      migrate: (persistedState) => migrateLegacyState(persistedState),
+      partialize: (state) => ({
+        transactions: state.transactions,
+        categories: state.categories,
+        accounts: state.accounts,
+        budgets: state.budgets,
+        savingsGoals: state.savingsGoals,
+        recurringBills: state.recurringBills,
+        settings: state.settings,
+        profile: state.profile,
+      }),
     }
   )
 );

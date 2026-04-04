@@ -1,76 +1,70 @@
-import { useEffect } from "react";
-import {
-  BrowserRouter as Router,
-  Routes,
-  Route,
-  Navigate,
-} from "react-router-dom";
+import { lazy, Suspense, useEffect } from "react";
+import { BrowserRouter as Router, Navigate, Route, Routes } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
-import Dashboard from "./pages/Dashboard";
-import Transactions from "./pages/Transactions";
-import Settings from "./pages/Settings";
-import UploadCSV from "./pages/UploadCSV";
-import Auth from "./pages/Auth";
 import ToastContainer from "./components/Toast";
-import Footer from "./components/Footer";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { useStore } from "./store/useStore";
-import Navbar from "./components/Navbar";
+import { AppShell } from "./components/layout/AppShell";
+import { APP_BRANDING } from "./config/app";
+
+const Auth = lazy(() => import("./pages/Auth"));
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const Transactions = lazy(() => import("./pages/Transactions"));
+const Planning = lazy(() => import("./pages/Planning"));
+const Goals = lazy(() => import("./pages/Goals"));
+const Insights = lazy(() => import("./pages/Insights"));
+const Settings = lazy(() => import("./pages/Settings"));
 
 function AppContent() {
   const { settings } = useStore();
 
   useEffect(() => {
     const htmlEl = document.documentElement;
-    if (settings.darkMode) {
+    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    const shouldUseDark =
+      settings.themeMode === "dark" ||
+      (settings.themeMode === "system" && prefersDark);
+
+    htmlEl.lang = "en";
+    if (shouldUseDark) {
       htmlEl.classList.add("dark");
     } else {
       htmlEl.classList.remove("dark");
     }
-  }, [settings.darkMode]);
+    const themeMeta = document.querySelector('meta[name="theme-color"]');
+    if (themeMeta) {
+      themeMeta.setAttribute("content", APP_BRANDING.themeColor);
+    }
+  }, [settings.themeMode]);
 
   return (
-    <div className="bg-white dark:bg-gray-900 transition-colors duration-200 min-h-screen flex flex-col">
-      <Navbar />
-      <main className="flex-1">
+    <div className="min-h-screen bg-slate-950 text-white">
+      <Suspense
+        fallback={
+          <div className="flex min-h-screen items-center justify-center bg-slate-950 text-slate-400">
+            Loading...
+          </div>
+        }
+      >
         <Routes>
           <Route path="/auth" element={<Auth />} />
           <Route
-            path="/dashboard"
             element={
               <ProtectedRoute>
-                <Dashboard />
+                <AppShell />
               </ProtectedRoute>
             }
-          />
-          <Route
-            path="/transactions"
-            element={
-              <ProtectedRoute>
-                <Transactions />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/settings"
-            element={
-              <ProtectedRoute>
-                <Settings />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/upload-csv"
-            element={
-              <ProtectedRoute>
-                <UploadCSV />
-              </ProtectedRoute>
-            }
-          />
-          <Route path="/" element={<Navigate to="/dashboard" />} />
+          >
+            <Route path="/" element={<Navigate to="/dashboard" replace />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/transactions" element={<Transactions />} />
+            <Route path="/planning" element={<Planning />} />
+            <Route path="/goals" element={<Goals />} />
+            <Route path="/insights" element={<Insights />} />
+            <Route path="/settings" element={<Settings />} />
+          </Route>
         </Routes>
-      </main>
-      <Footer />
+      </Suspense>
       <ToastContainer />
     </div>
   );

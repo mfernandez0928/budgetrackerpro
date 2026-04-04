@@ -1,310 +1,231 @@
-import { useState, useEffect } from "react";
+import { useRef } from "react";
+import { ArrowDownTrayIcon, ArrowUpTrayIcon, DevicePhoneMobileIcon } from "@heroicons/react/24/outline";
 import { useStore } from "../store/useStore";
+import { getCurrencyOptions } from "../lib/finance";
+import { exportSnapshotAsJson, exportTransactionsAsCsv, parseCsvTransactions, parseJsonSnapshot } from "../lib/export";
+import { SectionHeader } from "../components/ui/SectionHeader";
 import { showToast } from "../components/Toast";
-import { signOut } from "firebase/auth";
-import { auth } from "../config/firebase";
-import CategorySettings from "../components/settings/CategorySettings";
 
 export default function Settings() {
-  const { transactions, categories, settings, updateSettings } = useStore();
+  const store = useStore();
+  const importRef = useRef<HTMLInputElement>(null);
 
-  const [localSettings, setLocalSettings] = useState({
-    currency: settings.currency,
-    darkMode: settings.darkMode,
-    aiCategorization: settings.aiCategorization,
-    startOfMonth: settings.startOfMonth,
-  });
-
-  useEffect(() => {
-    setLocalSettings({
-      currency: settings.currency,
-      darkMode: settings.darkMode,
-      aiCategorization: settings.aiCategorization,
-      startOfMonth: settings.startOfMonth,
-    });
-  }, [settings]);
-
-  const handleAICategorization = (checked: boolean) => {
-    setLocalSettings({ ...localSettings, aiCategorization: checked });
-    updateSettings({ aiCategorization: checked });
-    showToast(
-      checked
-        ? "✅ AI categorization enabled!"
-        : "❌ AI categorization disabled!",
-      "success"
-    );
-  };
-
-  const handleCurrencyChange = (value: string) => {
-    setLocalSettings({ ...localSettings, currency: value });
-    updateSettings({ currency: value });
-    showToast("✅ Currency updated!", "success");
-  };
-
-  const handleDarkModeChange = (checked: boolean) => {
-    setLocalSettings({ ...localSettings, darkMode: checked });
-    updateSettings({ darkMode: checked });
-    showToast(
-      checked ? "🌙 Dark mode enabled!" : "☀️ Light mode enabled!",
-      "success"
-    );
-  };
-
-  const handleStartOfMonth = (value: number) => {
-    setLocalSettings({ ...localSettings, startOfMonth: value });
-    updateSettings({ startOfMonth: value });
-    showToast("✅ Start of month updated!", "success");
-  };
-
-  const handleExport = () => {
-    try {
-      const data = JSON.stringify(
-        { transactions, categories, settings },
-        null,
-        2
-      );
-      const blob = new Blob([data], { type: "application/json" });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `budget-tracker-${
-        new Date().toISOString().split("T")[0]
-      }.json`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-      showToast("📥 Data exported successfully!", "success");
-    } catch (error) {
-      showToast("❌ Export failed!", "error");
-    }
-  };
-
-  const handleCreateBackup = () => {
-    try {
-      const data = { transactions, categories, settings };
-      localStorage.setItem("budgetBackup", JSON.stringify(data));
-      showToast("💾 Backup created successfully!", "success");
-    } catch (error) {
-      showToast("❌ Backup failed!", "error");
-    }
-  };
-
-  const handleRestoreBackup = () => {
-    try {
-      const backup = localStorage.getItem("budgetBackup");
-      if (!backup) {
-        showToast("❌ No backup found", "error");
-        return;
-      }
-      const data = JSON.parse(backup);
-      if (data.transactions && data.categories && data.settings) {
-        updateSettings(data.settings);
-        showToast(
-          "✅ Backup restored successfully! (Reload to see all changes)",
-          "success"
-        );
-      } else {
-        showToast("❌ Invalid backup data", "error");
-      }
-    } catch (error) {
-      showToast("❌ Restore failed!", "error");
-    }
-  };
-
-  const handleStartOver = () => {
-    const confirmMessage =
-      "⚠️ COMPLETE RESET\n\n" +
-      "This will DELETE:\n" +
-      "❌ ALL transactions\n" +
-      "❌ ALL categories\n" +
-      "❌ ALL settings\n" +
-      "❌ You will be logged out\n\n" +
-      "This CANNOT be undone.\n\n" +
-      "Type CONFIRM to proceed:";
-
-    const userConfirm = prompt(confirmMessage);
-
-    if (userConfirm === "CONFIRM") {
-      try {
-        // Clear all data
-        localStorage.removeItem("budget-tracker-storage");
-        localStorage.removeItem("budgetBackup");
-        localStorage.removeItem("testUser");
-
-        // Clear session storage
-        sessionStorage.clear();
-
-        // Sign out
-        signOut(auth).catch(() => {});
-
-        showToast("🔄 Complete reset in progress...", "warning");
-
-        // Redirect after delay
-        setTimeout(() => {
-          window.location.href = "/auth";
-        }, 1500);
-      } catch (error) {
-        showToast("❌ Reset failed!", "error");
-      }
-    } else if (userConfirm !== null) {
-      showToast("❌ You must type CONFIRM to reset", "error");
-    }
-  };
+  function downloadFile(filename: string, content: string, type: string) {
+    const blob = new Blob([content], { type });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = filename;
+    anchor.click();
+    URL.revokeObjectURL(url);
+  }
 
   return (
-    <main className="min-h-screen bg-gray-50 dark:bg-gray-900 px-4 py-8 transition-colors">
-      <div className="max-w-3xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 dark:text-white">
-            Settings
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-2">
-            Manage your app preferences
-          </p>
+    <section className="space-y-6">
+      <div className="rounded-[2rem] border border-white/10 bg-white/5 p-5">
+        <SectionHeader
+          eyebrow="Preferences"
+          title="App settings"
+          description="Control currency, theme, install behavior, data export, and reset."
+        />
+        <div className="grid gap-4 md:grid-cols-2">
+          <label className="rounded-3xl border border-white/10 bg-slate-950/60 p-4">
+            <span className="text-sm font-semibold text-white">Currency</span>
+            <select
+              value={store.settings.currencyCode}
+              onChange={(event) =>
+                store.updateSettings({
+                  currencyCode: event.target.value as typeof store.settings.currencyCode,
+                })
+              }
+              className="mt-3 w-full rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 text-sm text-white outline-none focus:border-teal-400"
+            >
+              {getCurrencyOptions().map((option) => (
+                <option key={option.code} value={option.code}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className="rounded-3xl border border-white/10 bg-slate-950/60 p-4">
+            <span className="text-sm font-semibold text-white">Theme mode</span>
+            <select
+              value={store.settings.themeMode}
+              onChange={(event) =>
+                store.updateSettings({
+                  themeMode: event.target.value as typeof store.settings.themeMode,
+                })
+              }
+              className="mt-3 w-full rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 text-sm text-white outline-none focus:border-teal-400"
+            >
+              <option value="system">System</option>
+              <option value="light">Light</option>
+              <option value="dark">Dark</option>
+            </select>
+          </label>
+
+          <label className="rounded-3xl border border-white/10 bg-slate-950/60 p-4">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-sm font-semibold text-white">Notifications</p>
+                <p className="mt-1 text-sm text-slate-400">
+                  Store reminder preference for recurring bills and due nudges.
+                </p>
+              </div>
+              <input
+                type="checkbox"
+                checked={store.settings.notificationsEnabled}
+                onChange={(event) =>
+                  store.updateSettings({ notificationsEnabled: event.target.checked })
+                }
+                className="mt-1 h-5 w-5 rounded border-white/10 bg-slate-900 text-teal-400"
+              />
+            </div>
+          </label>
+
+          <label className="rounded-3xl border border-white/10 bg-slate-950/60 p-4">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-sm font-semibold text-white">Reduced motion</p>
+                <p className="mt-1 text-sm text-slate-400">
+                  Tone down movement for accessibility and calmer interactions.
+                </p>
+              </div>
+              <input
+                type="checkbox"
+                checked={store.settings.reducedMotion}
+                onChange={(event) =>
+                  store.updateSettings({ reducedMotion: event.target.checked })
+                }
+                className="mt-1 h-5 w-5 rounded border-white/10 bg-slate-900 text-teal-400"
+              />
+            </div>
+          </label>
         </div>
+      </div>
 
-        {/* General Settings */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 mb-8 transition-colors">
-          <h2 className="text-xl font-semibold text-gray-800 dark:text-white mb-6">
-            General Settings
-          </h2>
-          <div className="space-y-4">
-            {/* AI Categorization */}
-            <div className="flex items-center justify-between pb-4 border-b border-gray-200 dark:border-gray-700">
-              <div>
-                <p className="font-medium text-gray-800 dark:text-white">
-                  🤖 AI Transaction Categorization
-                </p>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Automatically categorize transactions
-                </p>
-              </div>
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={localSettings.aiCategorization}
-                  onChange={(e) => handleAICategorization(e.target.checked)}
-                  className="sr-only peer"
-                />
-                <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
-              </label>
-            </div>
-
-            {/* Dark Mode */}
-            <div className="flex items-center justify-between pb-4 border-b border-gray-200 dark:border-gray-700">
-              <div>
-                <p className="font-medium text-gray-800 dark:text-white">
-                  🌙 Dark Mode
-                </p>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Enable dark theme for the app
-                </p>
-              </div>
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={localSettings.darkMode}
-                  onChange={(e) => handleDarkModeChange(e.target.checked)}
-                  className="sr-only peer"
-                />
-                <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
-              </label>
-            </div>
-
-            {/* Currency */}
-            <div className="flex items-center justify-between pb-4 border-b border-gray-200 dark:border-gray-700">
-              <div>
-                <p className="font-medium text-gray-800 dark:text-white">
-                  💱 Currency Symbol
-                </p>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Choose your preferred currency
-                </p>
-              </div>
-              <select
-                value={localSettings.currency}
-                onChange={(e) => handleCurrencyChange(e.target.value)}
-                className="border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent cursor-pointer"
-              >
-                <option>$ (USD)</option>
-                <option>₱ (PHP)</option>
-                <option>€ (EUR)</option>
-                <option>£ (GBP)</option>
-              </select>
-            </div>
-
-            {/* Start of Month */}
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-medium text-gray-800 dark:text-white">
-                  📅 Start of Month
-                </p>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  First day of your billing cycle
-                </p>
-              </div>
-              <select
-                value={localSettings.startOfMonth}
-                onChange={(e) => handleStartOfMonth(parseInt(e.target.value))}
-                className="border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent cursor-pointer"
-              >
-                <option value="1">1st day</option>
-                <option value="15">15th day</option>
-              </select>
-            </div>
-          </div>
+      <div className="rounded-[2rem] border border-white/10 bg-white/5 p-5">
+        <SectionHeader
+          eyebrow="Data"
+          title="Import and export"
+          description="Back up the full local dataset or move transactions in and out with CSV."
+        />
+        <div className="grid gap-4 md:grid-cols-2">
+          <button
+            type="button"
+            onClick={() => {
+              downloadFile(
+                `budget-tracker-pro-${new Date().toISOString().split("T")[0]}.json`,
+                exportSnapshotAsJson(store),
+                "application/json"
+              );
+              showToast("JSON backup exported.", "success");
+            }}
+            className="inline-flex items-center justify-center gap-2 rounded-3xl border border-white/10 bg-slate-950/60 px-4 py-4 text-sm font-semibold text-white transition hover:bg-slate-900"
+          >
+            <ArrowDownTrayIcon className="h-5 w-5" />
+            Export full JSON backup
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              downloadFile(
+                `budget-transactions-${new Date().toISOString().split("T")[0]}.csv`,
+                exportTransactionsAsCsv(store.transactions, store.categories),
+                "text/csv"
+              );
+              showToast("CSV export ready.", "success");
+            }}
+            className="inline-flex items-center justify-center gap-2 rounded-3xl border border-white/10 bg-slate-950/60 px-4 py-4 text-sm font-semibold text-white transition hover:bg-slate-900"
+          >
+            <ArrowDownTrayIcon className="h-5 w-5" />
+            Export transactions CSV
+          </button>
+          <input
+            ref={importRef}
+            type="file"
+            accept=".json,.csv"
+            className="hidden"
+            onChange={async (event) => {
+              const file = event.target.files?.[0];
+              if (!file) return;
+              const rawText = await file.text();
+              if (file.name.endsWith(".json")) {
+                store.importSnapshot(parseJsonSnapshot(rawText));
+                showToast("JSON import complete.", "success");
+              } else {
+                const importedTransactions = parseCsvTransactions(
+                  rawText,
+                  store.categories,
+                  store.accounts[0]?.id ?? "wallet-cash"
+                );
+                store.importSnapshot({
+                  transactions: [...store.transactions, ...importedTransactions],
+                });
+                showToast("CSV transactions imported.", "success");
+              }
+              event.currentTarget.value = "";
+            }}
+          />
+          <button
+            type="button"
+            onClick={() => importRef.current?.click()}
+            className="inline-flex items-center justify-center gap-2 rounded-3xl border border-white/10 bg-slate-950/60 px-4 py-4 text-sm font-semibold text-white transition hover:bg-slate-900"
+          >
+            <ArrowUpTrayIcon className="h-5 w-5" />
+            Import JSON or CSV
+          </button>
         </div>
+      </div>
 
-        {/* Category Settings */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 mb-8 transition-colors">
-          <CategorySettings />
-        </div>
-
-        {/* Data Management */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 mb-8 transition-colors">
-          <h2 className="text-xl font-semibold text-gray-800 dark:text-white mb-6">
-            📊 Data Management
-          </h2>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-            Export, backup, and manage your data
-          </p>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <button
-              onClick={handleExport}
-              className="bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white rounded-lg px-4 py-3 font-semibold transition-all duration-200 flex items-center justify-center gap-2"
-            >
-              📥 Export All Data
-            </button>
-            <button
-              onClick={handleCreateBackup}
-              className="bg-green-600 hover:bg-green-700 active:bg-green-800 text-white rounded-lg px-4 py-3 font-semibold transition-all duration-200 flex items-center justify-center gap-2"
-            >
-              💾 Create Backup
-            </button>
-            <button
-              onClick={handleRestoreBackup}
-              className="bg-yellow-600 hover:bg-yellow-700 active:bg-yellow-800 text-white rounded-lg px-4 py-3 font-semibold transition-all duration-200 flex items-center justify-center gap-2"
-            >
-              ↩️ Restore Backup
-            </button>
-            <button
-              onClick={handleStartOver}
-              className="bg-red-600 hover:bg-red-700 active:bg-red-800 text-white rounded-lg px-4 py-3 font-semibold transition-all duration-200 flex items-center justify-center gap-2"
-            >
-              🔄 Complete Reset
-            </button>
-          </div>
-
-          <div className="mt-6 p-4 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-700">
-            <p className="text-sm text-red-900 dark:text-red-300">
-              <strong>⚠️ Complete Reset:</strong> Deletes ALL data and logs you
-              out. Type "CONFIRM" in the prompt to proceed. This cannot be
-              undone!
-            </p>
+      <div className="rounded-[2rem] border border-white/10 bg-white/5 p-5">
+        <SectionHeader
+          eyebrow="Install"
+          title="Progressive web app"
+          description="The app is installable, offline-friendly, and ready for home screen launch."
+        />
+        <div className="rounded-3xl border border-white/10 bg-slate-950/60 p-4">
+          <div className="flex items-start gap-3">
+            <div className="rounded-2xl bg-teal-400/15 p-3 text-teal-300">
+              <DevicePhoneMobileIcon className="h-6 w-6" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-white">Install guidance</p>
+              <p className="mt-1 text-sm text-slate-400">
+                Use the install prompt when available. Core assets are cached, and offline entry
+                continues to work because all budgeting data stays local-first.
+              </p>
+              <p className="mt-3 text-xs text-slate-500">
+                Install prompt and service worker behavior can be edited in
+                `src/components/pwa/InstallPromptCard.tsx` and `public/sw.js`.
+              </p>
+            </div>
           </div>
         </div>
       </div>
-    </main>
+
+      <div className="rounded-[2rem] border border-rose-400/20 bg-rose-400/10 p-5">
+        <SectionHeader
+          eyebrow="Reset"
+          title="Start fresh"
+          description="Clear local budgets, goals, accounts, and transactions from this device."
+        />
+        <button
+          type="button"
+          onClick={() => {
+            const confirmed = window.confirm(
+              "Reset all local app data on this device? This cannot be undone."
+            );
+            if (!confirmed) return;
+            store.resetToDefaults();
+            showToast("All local app data has been reset.", "success");
+          }}
+          className="rounded-full bg-rose-400 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-rose-300"
+        >
+          Reset local data
+        </button>
+      </div>
+    </section>
   );
 }

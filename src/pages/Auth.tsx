@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { signInWithPopup, GoogleAuthProvider } from "firebase/auth";
+import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
+import { Navigate, useNavigate } from "react-router-dom";
 import { auth } from "../config/firebase";
-import { showToast } from "../components/Toast";
-import { useNavigate } from "react-router-dom";
+import { APP_BRANDING } from "../config/app";
 import { useAuth } from "../context/AuthContext";
+import { showToast } from "../components/Toast";
 
 export default function Auth() {
   const navigate = useNavigate();
@@ -11,65 +12,57 @@ export default function Auth() {
   const [loading, setLoading] = useState(false);
 
   if (isAuthenticated) {
-    navigate("/dashboard");
-    return null;
+    return <Navigate to="/dashboard" replace />;
   }
 
-  const handleGoogleSignIn = async () => {
-    try {
-      setLoading(true);
-      const provider = new GoogleAuthProvider();
-      const result = await signInWithPopup(auth, provider);
-      showToast("✅ Signed in with Google!", "success");
-      navigate("/dashboard");
-    } catch (error: any) {
-      console.error("Google auth error:", error);
-      showToast(`❌ Google sign-in failed: ${error.message}`, "error");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
-    <main className="min-h-screen bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center px-4">
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 max-w-md w-full">
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">
-            🎯 BudgetTracker Pro
+    <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(20,184,166,0.22),_rgba(2,6,23,1)_55%)] px-4 py-10">
+      <div className="mx-auto grid min-h-[calc(100vh-5rem)] max-w-6xl items-center gap-8 lg:grid-cols-[1.1fr_0.9fr]">
+        <section>
+          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-teal-200/80">
+            Budget smarter
+          </p>
+          <h1 className="mt-4 max-w-3xl text-5xl font-semibold leading-tight text-white">
+            A finance tracker that helps build better habits, not just store receipts.
           </h1>
-          <p className="text-gray-600 dark:text-gray-400">
-            Manage your finances with ease
+          <p className="mt-4 max-w-2xl text-base text-slate-300">
+            Track income, plan category budgets, stay ahead of recurring bills, and grow savings
+            goals in a mobile-first app that installs like a real product.
           </p>
-        </div>
+        </section>
 
-        <button
-          onClick={handleGoogleSignIn}
-          disabled={loading}
-          className="w-full bg-white dark:bg-gray-700 border-2 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white py-4 rounded-lg font-bold hover:bg-gray-50 dark:hover:bg-gray-600 transition-all disabled:opacity-50 flex items-center justify-center gap-3 text-lg"
-        >
-          <span className="text-2xl">🔵</span>
-          {loading ? "Signing in..." : "Sign in with Google"}
-        </button>
-
-        <div className="mt-8 space-y-3 text-sm text-gray-600 dark:text-gray-300">
-          <h3 className="font-semibold text-gray-800 dark:text-white">
-            ✨ Features:
-          </h3>
-          <div className="space-y-2">
-            <p>✅ Track income and expenses</p>
-            <p>✅ Categorize transactions</p>
-            <p>✅ View spending analytics</p>
-            <p>✅ Export your data</p>
-            <p>✅ Dark mode support</p>
-          </div>
-        </div>
-
-        <div className="mt-8 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-700">
-          <p className="text-sm text-blue-900 dark:text-blue-300">
-            💡 <strong>Secure:</strong> All your data is stored locally on your
-            device.
+        <section className="rounded-[2rem] border border-white/10 bg-slate-950/70 p-6 shadow-2xl shadow-slate-950/60 backdrop-blur">
+          <img
+            src="/icon-512.svg"
+            alt={`${APP_BRANDING.name} logo`}
+            className="h-16 w-16 rounded-3xl border border-white/10 bg-white/5 p-2"
+          />
+          <h2 className="mt-6 text-2xl font-semibold text-white">Welcome to {APP_BRANDING.shortName}</h2>
+          <p className="mt-2 text-sm text-slate-400">
+            Sign in to continue with your finance workspace and local budgeting data.
           </p>
-        </div>
+          <button
+            type="button"
+            disabled={loading}
+            onClick={async () => {
+              try {
+                setLoading(true);
+                await signInWithPopup(auth, new GoogleAuthProvider());
+                showToast("Signed in successfully.", "success");
+                navigate("/dashboard", { replace: true });
+              } catch (error) {
+                const message =
+                  error instanceof Error ? error.message : "Google sign-in failed.";
+                showToast(message, "error");
+              } finally {
+                setLoading(false);
+              }
+            }}
+            className="mt-6 inline-flex w-full items-center justify-center rounded-full bg-teal-400 px-5 py-4 text-sm font-semibold text-slate-950 transition hover:bg-teal-300 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {loading ? "Signing in..." : "Continue with Google"}
+          </button>
+        </section>
       </div>
     </main>
   );
