@@ -21,15 +21,15 @@ export function BudgetPlanner() {
   );
 
   return (
-    <section className="rounded-[2rem] border border-white/10 bg-white/5 p-5">
+    <section className="rounded-3xl border border-line bg-surface p-4 md:p-5">
       <SectionHeader
         eyebrow="Budget planning"
         title="Category budgets"
         description="Set limits that help you notice pressure before the month runs away."
       />
       {recommendations.length ? (
-        <div className="mb-4 rounded-3xl border border-amber-400/20 bg-amber-400/10 p-4">
-          <p className="text-sm font-semibold text-amber-100">Budget suggestion</p>
+        <div className="mb-4 rounded-3xl border border-warn/30 bg-warn/10 p-4">
+          <p className="text-sm font-semibold text-warn">Budget suggestion</p>
           <p className="mt-1 text-sm text-amber-50">
             You have spending in {recommendations.map((item) => item.name).join(", ")} without
             a monthly budget. Start there for the biggest behavior lift.
@@ -42,12 +42,12 @@ export function BudgetPlanner() {
           return (
             <div
               key={category.id}
-              className="rounded-3xl border border-white/10 bg-slate-950/60 p-4"
+              className="rounded-3xl border border-line bg-raised p-4"
             >
               <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                 <div>
-                  <p className="text-base font-semibold text-white">{category.name}</p>
-                  <p className="mt-1 text-sm text-slate-400">
+                  <p className="text-base font-semibold text-ink">{category.name}</p>
+                  <p className="mt-1 text-sm text-muted">
                     Spent{" "}
                     {formatCurrency(currentBudget?.spent ?? 0, settings.currencyCode)}
                     {currentBudget
@@ -58,11 +58,11 @@ export function BudgetPlanner() {
                       : " this month"}
                   </p>
                   {currentBudget?.status === "over" ? (
-                    <p className="mt-2 text-xs font-semibold uppercase tracking-[0.2em] text-rose-300">
+                    <p className="mt-2 text-xs font-semibold uppercase tracking-[0.14em] text-neg">
                       Over budget
                     </p>
                   ) : currentBudget?.status === "watch" ? (
-                    <p className="mt-2 text-xs font-semibold uppercase tracking-[0.2em] text-amber-300">
+                    <p className="mt-2 text-xs font-semibold uppercase tracking-[0.14em] text-warn">
                       Nearing budget limit
                     </p>
                   ) : null}
@@ -78,7 +78,7 @@ export function BudgetPlanner() {
                       }))
                     }
                     placeholder="Set monthly limit"
-                    className="rounded-full border border-white/10 bg-slate-900 px-4 py-2.5 text-sm text-white outline-none placeholder:text-slate-500 focus:border-teal-400"
+                    className="rounded-full border border-line bg-raised px-4 py-2.5 text-sm text-ink outline-none placeholder:text-muted focus:border-teal-400"
                   />
                   <button
                     type="button"
@@ -96,7 +96,7 @@ export function BudgetPlanner() {
                       });
                       showToast(`Budget saved for ${category.name}.`, "success");
                     }}
-                    className="rounded-full bg-teal-400 px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-teal-300"
+                    className="rounded-full bg-brand px-4 py-2.5 text-sm font-semibold text-on-brand transition hover:brightness-110"
                   >
                     Save budget
                   </button>
@@ -104,17 +104,8 @@ export function BudgetPlanner() {
               </div>
               {currentBudget ? (
                 <div className="mt-4 space-y-2">
-                  <ProgressBar
-                    value={currentBudget.usage}
-                    colorClass={
-                      currentBudget.status === "over"
-                        ? "bg-rose-400"
-                        : currentBudget.status === "watch"
-                        ? "bg-amber-400"
-                        : "bg-emerald-400"
-                    }
-                  />
-                  <div className="flex items-center justify-between text-xs text-slate-400">
+                  <ProgressBar value={currentBudget.usage} alertThreshold={currentBudget.alertThreshold} />
+                  <div className="flex items-center justify-between text-xs text-muted">
                     <span>{Math.round(currentBudget.usage * 100)}% used</span>
                     <span>
                       Remaining{" "}
