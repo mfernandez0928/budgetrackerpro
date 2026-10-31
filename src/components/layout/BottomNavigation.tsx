@@ -1,93 +1,77 @@
-import {
-  BanknotesIcon,
-  ClockIcon,
-  HomeIcon,
-  PlusIcon,
-  WalletIcon,
-  XMarkIcon,
-} from "@heroicons/react/24/outline";
-import { useState } from "react";
-import { NavLink, useNavigate } from "react-router-dom";
+import { EllipsisHorizontalIcon, PlusIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import { useEffect, useState } from "react";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
+import { getActiveNavKey } from "../../lib/ui";
+import { MoreSheet } from "./MoreSheet";
+import { primaryNav, quickActions } from "./navigation";
 
-const navItems = [
-  { to: "/dashboard", label: "Home", icon: HomeIcon },
-  { to: "/wallet", label: "Wallet", icon: WalletIcon },
-  { to: "/plan", label: "Plan", icon: BanknotesIcon },
-  { to: "/transactions", label: "History", icon: ClockIcon },
-];
-
-const quickActions = [
-  {
-    label: "Add transaction",
-    description: "Capture income, expense, or transfer",
-    action: "/transactions",
-  },
-  {
-    label: "Add account",
-    description: "Set up a new wallet or bank account",
-    action: "/wallet",
-  },
-  {
-    label: "Set a budget",
-    description: "Plan a category before money leaves",
-    action: "/plan",
-  },
-  {
-    label: "Create a goal",
-    description: "Turn a target into a savings habit",
-    action: "/plan",
-  },
-];
+const slotClass = (active: boolean) =>
+  `flex min-h-[52px] flex-col items-center justify-center gap-1 rounded-2xl text-[11px] font-semibold transition ${
+    active ? "text-brand" : "text-muted hover:text-ink"
+  }`;
 
 export function BottomNavigation() {
   const navigate = useNavigate();
-  const [isOpen, setIsOpen] = useState(false);
+  const { pathname } = useLocation();
+  const activeKey = getActiveNavKey(pathname);
+  const [addOpen, setAddOpen] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
+
+  useEffect(() => {
+    if (!addOpen) return;
+    const handleKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setAddOpen(false);
+    };
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, [addOpen]);
+
+  const [home, wallet, plan] = primaryNav;
+  const renderLink = (item: typeof home) => (
+    <NavLink to={item.to} className={() => slotClass(activeKey === item.key)}>
+      <item.icon className="h-6 w-6" />
+      {item.label}
+    </NavLink>
+  );
 
   return (
     <>
-      {isOpen ? (
-        <div
-          className="fixed inset-0 z-40 bg-slate-950/20 backdrop-blur-sm md:hidden"
-          onClick={() => setIsOpen(false)}
-          aria-hidden="true"
-        />
-      ) : null}
-
-      {isOpen ? (
-        <div className="fixed inset-x-4 bottom-36 z-50 md:hidden">
-          <div className="rounded-[2rem] border border-white/80 bg-white/95 p-4 shadow-[0_30px_90px_rgba(15,23,42,0.15)] backdrop-blur">
+      {addOpen ? (
+        <div className="fixed inset-0 z-40 md:hidden">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setAddOpen(false)} aria-hidden="true" />
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label="Quick add"
+            className="absolute inset-x-3 bottom-[calc(96px+env(safe-area-inset-bottom))] rounded-3xl border border-line bg-surface p-4"
+          >
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-semibold uppercase tracking-[0.24em] text-[#5e985d]">
-                  Quick add
-                </p>
-                <p className="mt-1 text-lg font-bold text-slate-900">
-                  Pick the next money move
-                </p>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-brand">Quick add</p>
+                <p className="mt-1 text-base font-bold text-ink">Pick the next money move</p>
               </div>
               <button
                 type="button"
-                onClick={() => setIsOpen(false)}
-                className="flex h-11 w-11 items-center justify-center rounded-full bg-slate-100 text-slate-500"
+                onClick={() => setAddOpen(false)}
+                className="flex h-11 w-11 items-center justify-center rounded-full bg-raised text-muted"
                 aria-label="Close quick actions"
               >
                 <XMarkIcon className="h-5 w-5" />
               </button>
             </div>
-
-            <div className="mt-4 space-y-3">
+            <div className="mt-3 space-y-2">
               {quickActions.map((item) => (
                 <button
                   key={item.label}
                   type="button"
                   onClick={() => {
-                    setIsOpen(false);
+                    setAddOpen(false);
                     navigate(item.action);
                   }}
-                  className="w-full rounded-[1.6rem] border border-slate-200 bg-slate-50 px-4 py-4 text-left transition hover:border-[#c3d8c3] hover:bg-[#f4faf4]"
+                  className="w-full rounded-2xl bg-raised px-4 py-3 text-left transition hover:bg-brand/10"
                 >
-                  <p className="font-semibold text-slate-900">{item.label}</p>
-                  <p className="mt-1 text-sm text-slate-500">{item.description}</p>
+                  <p className="text-sm font-semibold text-ink">{item.label}</p>
+                  <p className="mt-0.5 text-xs text-muted">{item.description}</p>
                 </button>
               ))}
             </div>
@@ -95,39 +79,41 @@ export function BottomNavigation() {
         </div>
       ) : null}
 
-      <div className="fixed inset-x-0 bottom-0 z-50 px-4 pb-4 md:hidden">
-        <div className="mx-auto flex max-w-xl items-end gap-3">
-          <nav className="flex-1 rounded-[2rem] border border-white/80 bg-white/95 px-3 py-3 shadow-[0_28px_80px_rgba(15,23,42,0.16)] backdrop-blur">
-            <ul className="grid grid-cols-4 gap-1">
-              {navItems.map((item) => (
-                <li key={item.to}>
-                  <NavLink
-                    to={item.to}
-                    className={({ isActive }) =>
-                      `flex flex-col items-center justify-center rounded-[1.5rem] px-2 py-2.5 text-[11px] font-semibold transition ${
-                        isActive
-                          ? "bg-[#edf6ee] text-[#5e985d]"
-                          : "text-slate-400 hover:bg-slate-50 hover:text-slate-900"
-                      }`
-                    }
-                  >
-                    <item.icon className="mb-1.5 h-5 w-5" />
-                    {item.label}
-                  </NavLink>
-                </li>
-              ))}
-            </ul>
-          </nav>
+      <MoreSheet open={moreOpen} onClose={() => setMoreOpen(false)} />
 
+      <div className="pb-safe fixed inset-x-0 bottom-0 z-50 px-3 md:hidden">
+        <nav
+          aria-label="Main"
+          className="mx-auto mb-3 grid max-w-xl grid-cols-5 items-center rounded-[26px] border border-line bg-surface/95 p-2 backdrop-blur"
+        >
+          {renderLink(home)}
+          {renderLink(wallet)}
           <button
             type="button"
-            onClick={() => setIsOpen((value) => !value)}
-            className="flex h-[86px] w-[86px] items-center justify-center rounded-[2rem] bg-[#5e985d] text-white shadow-[0_28px_60px_rgba(94,152,93,0.35)] transition hover:bg-[#518650]"
+            onClick={() => {
+              setMoreOpen(false);
+              setAddOpen((value) => !value);
+            }}
+            className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-brand text-on-brand shadow-lg transition hover:brightness-110"
             aria-label="Open quick actions"
+            aria-expanded={addOpen}
           >
-            <PlusIcon className="h-9 w-9" />
+            <PlusIcon className="h-7 w-7" />
           </button>
-        </div>
+          {renderLink(plan)}
+          <button
+            type="button"
+            onClick={() => {
+              setAddOpen(false);
+              setMoreOpen((value) => !value);
+            }}
+            className={slotClass(activeKey === "more" || moreOpen)}
+            aria-expanded={moreOpen}
+          >
+            <EllipsisHorizontalIcon className="h-6 w-6" />
+            More
+          </button>
+        </nav>
       </div>
     </>
   );
