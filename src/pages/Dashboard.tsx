@@ -1,7 +1,7 @@
 import { ArrowTrendingUpIcon, CalendarDaysIcon } from "@heroicons/react/24/outline";
 import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { BudgetBuddy } from "../components/illustrations/BudgetBuddy";
+import { Susi } from "../components/illustrations/Susi";
 import { BrandMark } from "../components/ui/BrandMark";
 import { EmptyState } from "../components/ui/EmptyState";
 import { useStore } from "../store/useStore";
@@ -146,9 +146,9 @@ export default function Dashboard() {
 
       <section className="overflow-hidden rounded-[2.25rem] bg-[#5d955d]">
         <div className="flex items-end gap-2 px-4 pt-4">
-          <BudgetBuddy mood="wave" />
+          <Susi mood="wave" />
           <div className="mb-5 flex-1 rounded-[2rem] bg-white/95 p-5 shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
-            <p className="text-2xl font-black tracking-[-0.04em] text-[#4f8b4f]">Tarsi</p>
+            <p className="text-2xl font-black tracking-[-0.04em] text-[#4f8b4f]">Susi</p>
             <p className="mt-2 text-lg leading-8 text-slate-500">
               {getCoachLine(monthlyInsights.insights)}
             </p>

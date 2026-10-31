@@ -1,7 +1,7 @@
 import { EllipsisHorizontalIcon, PlusIcon } from "@heroicons/react/24/outline";
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { BudgetBuddy } from "../components/illustrations/BudgetBuddy";
+import { Susi } from "../components/illustrations/Susi";
 import { BrandMark } from "../components/ui/BrandMark";
 import { PageIntro } from "../components/ui/PageIntro";
 import { PickerSheet } from "../components/ui/PickerSheet";
@@ -124,7 +124,7 @@ export default function Wallet() {
 
       <section className="overflow-hidden rounded-[2.25rem] bg-[#5d955d]">
         <div className="flex flex-col gap-4 px-4 pt-4 md:flex-row md:items-end">
-          <BudgetBuddy mood="book" />
+          <Susi mood="think" />
           <div className="flex-1 space-y-4 pb-4">
             <div className="rounded-[2rem] bg-white/95 p-5 shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
               <div className="flex items-start justify-between gap-3">
