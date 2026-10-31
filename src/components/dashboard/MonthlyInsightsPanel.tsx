@@ -7,16 +7,16 @@ export function MonthlyInsightsPanel() {
   const insight = getMonthlyInsightSummary(store);
 
   return (
-    <section className="rounded-[2rem] border border-white/10 bg-white/5 p-5">
+    <section className="rounded-3xl border border-line bg-surface p-4 md:p-5">
       <div className="flex items-center gap-2">
-        <LightBulbIcon className="h-5 w-5 text-amber-300" />
-        <p className="text-lg font-semibold text-white">Monthly insights</p>
+        <LightBulbIcon className="h-5 w-5 text-warn" />
+        <p className="text-base font-semibold text-ink">Monthly insights</p>
       </div>
       <div className="mt-4 space-y-3">
         {insight.insights.map((line) => (
           <div
             key={line}
-            className="rounded-3xl border border-white/10 bg-slate-950/60 px-4 py-3 text-sm text-slate-200"
+            className="rounded-3xl border border-line bg-raised px-4 py-3 text-sm text-ink"
           >
             {line}
           </div>

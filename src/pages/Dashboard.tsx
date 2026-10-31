@@ -1,27 +1,38 @@
-import { ArrowTrendingUpIcon, CalendarDaysIcon } from "@heroicons/react/24/outline";
-import { useMemo } from "react";
+import {
+  ArrowDownLeftIcon,
+  ArrowTopRightOnSquareIcon,
+  ArrowUpRightIcon,
+  ArrowsRightLeftIcon,
+  EyeIcon,
+  EyeSlashIcon,
+  MinusCircleIcon,
+} from "@heroicons/react/24/outline";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Susi } from "../components/illustrations/Susi";
-import { BrandMark } from "../components/ui/BrandMark";
+import { ActivityRow } from "../components/ui/ActivityRow";
+import { Card, CardLink } from "../components/ui/Card";
 import { EmptyState } from "../components/ui/EmptyState";
+import { WalletCard } from "../components/ui/WalletCard";
 import { useStore } from "../store/useStore";
 import {
   formatCurrency,
-  getGoalProgress,
   getMonthlyInsightSummary,
   getMonthlySummary,
+  getRecentTransactions,
   getUpcomingPayments,
+  getWalletSummary,
 } from "../lib/finance";
 import { daysUntil, getTodayISO } from "../lib/date";
+
+const HIDDEN = "••••••";
 
 function formatHeaderDate() {
   return new Intl.DateTimeFormat(undefined, {
     weekday: "long",
     month: "long",
     day: "numeric",
-  })
-    .format(new Date())
-    .toUpperCase();
+  }).format(new Date());
 }
 
 function getGreeting() {
@@ -40,21 +51,42 @@ function getCoachLine(lines: string[]) {
 
 function getWeekBars(values: number[]) {
   const max = Math.max(...values, 1);
-  return values.map((value, index) => ({
-    day: ["T", "W", "T", "F", "S", "S", "M"][index] ?? "D",
-    height: Math.max(10, Math.round((value / max) * 84)),
-    active: index === values.length - 1,
-  }));
+  return values.map((value, index) => {
+    const date = new Date();
+    date.setDate(date.getDate() - (values.length - 1 - index));
+    return {
+      day: date.toLocaleDateString(undefined, { weekday: "narrow" }),
+      height: Math.max(6, Math.round((value / max) * 72)),
+      active: index === values.length - 1,
+    };
+  });
+}
+
+function sparklinePath(values: number[]) {
+  const max = Math.max(...values, 1);
+  const step = 200 / Math.max(values.length - 1, 1);
+  return values
+    .map((value, index) => `${index === 0 ? "M" : "L"}${Math.round(index * step)} ${Math.round(62 - (value / max) * 54)}`)
+    .join(" ");
+}
+
+function accountInitials(name: string, icon?: string) {
+  return (icon ?? name.slice(0, 2)).slice(0, 3).toUpperCase();
 }
 
 export default function Dashboard() {
   const store = useStore();
   const navigate = useNavigate();
+  const [hidden, setHidden] = useState(false);
+  const currency = store.settings.currencyCode;
   const monthly = getMonthlySummary(store);
   const monthlyInsights = getMonthlyInsightSummary(store);
-  const goals = getGoalProgress(store.savingsGoals);
-  const upcoming = getUpcomingPayments(store, 30).slice(0, 4);
+  const wallet = getWalletSummary(store);
+  const upcoming = getUpcomingPayments(store, 30);
+  const recent = getRecentTransactions(store.transactions, 6);
   const profileName = store.profile.hasCompletedOnboarding ? "Bryl" : "there";
+  const money = (amount: number, code: string = currency) =>
+    hidden ? HIDDEN : formatCurrency(amount, code);
 
   const dayValues = useMemo(() => {
     const dates = Array.from({ length: 7 }, (_, index) => {
@@ -102,243 +134,290 @@ export default function Dashboard() {
     return candidates[0];
   }, [store.plannedPayments, store.recurringBills]);
 
-  const groupedUpcoming = {
-    income: upcoming.filter((item) => {
-      const recurring = store.recurringBills.find((bill) => bill.id === item.id);
-      return recurring?.type === "income";
-    }),
-    expenses: upcoming.filter((item) => {
-      const recurring = store.recurringBills.find((bill) => bill.id === item.id);
-      return recurring?.type !== "income";
-    }),
-  };
-
+  const nextBill = upcoming.find((item) => {
+    const recurring = store.recurringBills.find((bill) => bill.id === item.id);
+    return recurring?.type !== "income";
+  });
+  const leftToSpend = monthly.planned
+    ? monthly.planned - monthly.spentAgainstBudget
+    : monthly.income - monthly.expenses;
   const weekBars = getWeekBars(dayValues);
+  const stackAccounts = wallet.balances.slice(0, 3);
+  const accountName = (id: string) =>
+    store.accounts.find((account) => account.id === id)?.name ?? "Account";
 
   return (
-    <section className="space-y-6">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-400">
+    <section className="space-y-4 md:space-y-5">
+      <section className="bg-hero relative flex items-center gap-4 overflow-hidden rounded-3xl p-5 md:p-6">
+        <svg
+          className="pointer-events-none absolute inset-x-0 bottom-0 h-16 w-full opacity-30"
+          viewBox="0 0 800 70"
+          preserveAspectRatio="none"
+          aria-hidden="true"
+        >
+          <path
+            d="M0 50 C120 10 220 60 340 30 C460 0 560 55 680 25 C740 12 780 30 800 34 L800 70 L0 70Z"
+            fill="currentColor"
+          />
+        </svg>
+        <div className="relative min-w-0 flex-1">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] opacity-75">
             {formatHeaderDate()}
           </p>
-          <h1 className="mt-2 text-[2.75rem] font-black leading-none tracking-[-0.05em] text-slate-900">
+          <h1 className="mt-1 text-2xl font-bold tracking-tight md:text-3xl">
             {getGreeting()}, {profileName}!
           </h1>
+          <p className="mt-3 max-w-xl rounded-2xl bg-white/60 px-4 py-2.5 text-sm dark:bg-black/25">
+            <span className="font-bold text-brand">Susi</span>
+            <span className="ml-2">{getCoachLine(monthlyInsights.insights)}</span>
+          </p>
         </div>
-        <div className="hidden gap-3 sm:flex">
-          <button
-            type="button"
-            onClick={() => navigate("/transactions")}
-            className="flex h-14 w-14 items-center justify-center rounded-[1.5rem] bg-white/80 text-[#5e985d] shadow-[0_18px_40px_rgba(148,163,184,0.15)]"
+        <Susi mood="wave" size={112} className="relative hidden sm:block" />
+        <Susi mood="wave" size={72} className="relative sm:hidden" />
+      </section>
+
+      <div className="grid gap-3 md:grid-cols-[1.5fr_repeat(3,1fr)] md:gap-4">
+        <section className="bg-brand-gradient relative overflow-hidden rounded-3xl p-5">
+          <div className="flex items-start justify-between gap-3">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/85">
+              Net balance
+            </p>
+            <button
+              type="button"
+              onClick={() => setHidden((value) => !value)}
+              className="-m-2 flex h-11 w-11 items-center justify-center rounded-full text-white/85 transition hover:bg-white/15"
+              aria-label={hidden ? "Show amounts" : "Hide amounts"}
+              aria-pressed={hidden}
+            >
+              {hidden ? <EyeSlashIcon className="h-5 w-5" /> : <EyeIcon className="h-5 w-5" />}
+            </button>
+          </div>
+          <p className="relative mt-1 truncate text-3xl font-extrabold tracking-tight">
+            {money(wallet.netWorth)}
+          </p>
+          <p className="relative mt-1 text-sm text-white/85">
+            Across {store.accounts.length} {store.accounts.length === 1 ? "wallet" : "wallets"}
+          </p>
+          <svg
+            className="pointer-events-none absolute bottom-0 right-0 h-16 w-3/5 opacity-60"
+            viewBox="0 0 200 70"
+            preserveAspectRatio="none"
+            aria-hidden="true"
           >
-            <CalendarDaysIcon className="h-6 w-6" />
-          </button>
-          <button
-            type="button"
-            onClick={() => navigate("/settings")}
-            className="flex h-14 w-14 items-center justify-center rounded-[1.5rem] bg-white/80 text-[#5e985d] shadow-[0_18px_40px_rgba(148,163,184,0.15)]"
-          >
-            <ArrowTrendingUpIcon className="h-6 w-6" />
-          </button>
+            <path d={sparklinePath(dayValues)} stroke="#fff" strokeWidth="3" fill="none" />
+          </svg>
+        </section>
+
+        <div className="-mx-4 flex gap-3 overflow-x-auto px-4 pb-1 md:contents">
+          {[
+            {
+              label: "Days until payday",
+              value: nextPayday ? `${Math.max(0, daysUntil(nextPayday.date))} days` : "Plan one",
+              hint: nextPayday ? `${nextPayday.title} · ${money(nextPayday.amount)}` : "No income planned",
+            },
+            {
+              label: "Next bill",
+              value: nextBill ? money(nextBill.amount) : "None",
+              hint: nextBill
+                ? `${nextBill.title} · ${new Date(nextBill.dueDate).toLocaleDateString(undefined, { month: "short", day: "numeric" })}`
+                : "Nothing due in 30 days",
+            },
+            {
+              label: "Left to spend",
+              value: money(leftToSpend),
+              hint: monthly.planned ? "Against this month's budget" : "Income minus expenses",
+            },
+          ].map((item) => (
+            <section
+              key={item.label}
+              className="min-w-[160px] shrink-0 rounded-3xl border border-line bg-surface p-4 md:min-w-0"
+            >
+              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">{item.label}</p>
+              <p className="mt-2 truncate text-xl font-extrabold text-ink">{item.value}</p>
+              <p className="mt-0.5 truncate text-xs text-muted">{item.hint}</p>
+            </section>
+          ))}
         </div>
       </div>
 
-      <section className="overflow-hidden rounded-[2.25rem] bg-[#5d955d]">
-        <div className="flex items-end gap-2 px-4 pt-4">
-          <Susi mood="wave" />
-          <div className="mb-5 flex-1 rounded-[2rem] bg-white/95 p-5 shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
-            <p className="text-2xl font-black tracking-[-0.04em] text-[#4f8b4f]">Susi</p>
-            <p className="mt-2 text-lg leading-8 text-slate-500">
-              {getCoachLine(monthlyInsights.insights)}
-            </p>
-          </div>
-        </div>
-      </section>
-
-      <div className="grid gap-4 md:grid-cols-2">
-        <section className="rounded-[2rem] bg-white/92 p-5 shadow-[0_22px_60px_rgba(148,163,184,0.14)]">
-          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-400">
-            Last 7 days
-          </p>
-          <div className="mt-8 flex h-32 items-end justify-between gap-3">
-            {weekBars.map((bar) => (
-              <div key={`${bar.day}-${bar.height}`} className="flex flex-1 flex-col items-center gap-3">
-                <div
-                  className={`w-3 rounded-full ${bar.active ? "bg-[#5e985d]" : "bg-[#c9dec8]"}`}
-                  style={{ height: `${bar.height}px` }}
-                />
-                <span className={`text-sm font-semibold ${bar.active ? "text-slate-900" : "text-slate-400"}`}>
-                  {bar.day}
-                </span>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <section className="rounded-[2rem] bg-white/92 p-5 shadow-[0_22px_60px_rgba(148,163,184,0.14)]">
-          <p className="text-[2rem] font-black tracking-[-0.05em] text-slate-900">Today</p>
-          <p className={`mt-10 text-[2.2rem] font-black tracking-[-0.05em] ${todayTotal >= 0 ? "text-slate-900" : "text-rose-500"}`}>
-            {formatCurrency(todayTotal, store.settings.currencyCode)}
-          </p>
-          <div className="mt-8 inline-flex rounded-full bg-slate-50 p-1">
-            {["Day", "Week", "Month"].map((item, index) => (
-              <button
-                key={item}
-                type="button"
-                className={`rounded-full px-5 py-2.5 text-sm font-semibold transition ${
-                  index === 0 ? "bg-[#5e985d] text-white" : "text-slate-400"
-                }`}
-              >
-                {item}
-              </button>
-            ))}
-          </div>
-        </section>
-      </div>
-
-      <section className="rounded-[2rem] bg-[linear-gradient(90deg,rgba(232,245,235,0.95),rgba(255,255,255,0.88))] p-5 shadow-[0_22px_60px_rgba(148,163,184,0.14)]">
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <div className="flex h-16 w-16 items-center justify-center rounded-[1.5rem] bg-[#e8f3e8] text-[#5e985d]">
-              <ArrowTrendingUpIcon className="h-7 w-7" />
-            </div>
-            <div>
-              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#5e985d]">
-                Days until payday
-              </p>
-              <p className="mt-1 text-[2.2rem] font-black tracking-[-0.05em] text-slate-900">
-                {nextPayday ? `${Math.max(0, daysUntil(nextPayday.date))} days` : "Plan one"}
-              </p>
-            </div>
-          </div>
-          <div className="text-right">
-            <p className="text-[2rem] font-black tracking-[-0.04em] text-[#5e985d]">
-              {nextPayday ? formatCurrency(nextPayday.amount, store.settings.currencyCode) : "--"}
-            </p>
-            <p className="mt-1 text-xl text-slate-400">
-              {nextPayday ? new Date(nextPayday.date).toLocaleDateString(undefined, { month: "short", day: "numeric" }) : "No income planned"}
-            </p>
-          </div>
-        </div>
-      </section>
-
-      <section className="rounded-[2rem] bg-white/92 p-5 shadow-[0_22px_60px_rgba(148,163,184,0.14)]">
-        <div className="flex items-start gap-4">
-          <div className="flex h-16 w-16 items-center justify-center rounded-[1.5rem] bg-[#edf6ee] text-[#5e985d]">
-            <CalendarDaysIcon className="h-7 w-7" />
-          </div>
-          <div>
-            <p className="text-[2rem] font-black tracking-[-0.05em] text-slate-900">Upcoming</p>
-            <p className="mt-1 text-lg text-slate-400">Planned and recurring money moves</p>
-          </div>
-        </div>
-
-        {upcoming.length ? (
-          <div className="mt-8 space-y-6">
-            <div>
-              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#5e985d]">
-                Income
-              </p>
-              <div className="mt-4 space-y-3">
-                {groupedUpcoming.income.length ? (
-                  groupedUpcoming.income.map((item) => (
-                    <div key={`${item.source}-${item.id}`} className="flex items-center justify-between gap-4">
-                      <div className="flex items-center gap-4">
-                        <BrandMark label="IN" color="#7cf24b" size="md" />
-                        <div>
-                          <p className="text-[1.05rem] font-bold text-slate-900">{item.title}</p>
-                          <p className="text-lg text-slate-400">
-                            {new Date(item.dueDate).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
-                          </p>
-                        </div>
-                      </div>
-                      <p className="text-[1.2rem] font-black text-[#5e985d]">
-                        {formatCurrency(item.amount, store.settings.currencyCode)}
-                      </p>
-                    </div>
-                  ))
-                ) : (
-                  <p className="rounded-[1.5rem] bg-slate-50 px-4 py-4 text-sm text-slate-500">
-                    No income scheduled yet. Add one from History or Plan.
-                  </p>
-                )}
-              </div>
-            </div>
-
-            <div>
-              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-rose-400">
-                Expenses
-              </p>
-              <div className="mt-4 space-y-3">
-                {groupedUpcoming.expenses.map((item, index) => (
-                  <div
-                    key={`${item.source}-${item.id}`}
-                    className={`flex items-center justify-between gap-4 rounded-[1.7rem] px-3 py-3 ${
-                      index === 0 ? "bg-rose-50" : ""
-                    }`}
-                  >
-                    <div className="flex items-center gap-4">
-                      <BrandMark
-                        label={item.title.slice(0, 2).toUpperCase()}
-                        color={index === 0 ? "#111111" : "#eef2f7"}
-                        textColor={index === 0 ? "#ef4444" : "#475569"}
-                        size="md"
+      <div className="grid gap-4 lg:grid-cols-[1.1fr_1fr]">
+        <Card
+          title={`Wallets · ${store.accounts.length}`}
+          action={<CardLink to="/wallet">All ({store.accounts.length}) →</CardLink>}
+        >
+          {stackAccounts.length ? (
+            <>
+              <div className="relative h-[190px] sm:h-[200px]">
+                {stackAccounts
+                  .map((account, index) => ({ account, index }))
+                  .reverse()
+                  .map(({ account, index }) => (
+                    <div
+                      key={account.id}
+                      className="absolute w-[72%] sm:w-[62%]"
+                      style={{ left: `${(stackAccounts.length - 1 - index) * 10 + (3 - stackAccounts.length) * 5}%`, top: `${index * 7}px`, zIndex: 3 - index }}
+                    >
+                      <WalletCard
+                        name={account.name}
+                        initials={accountInitials(account.name, account.icon)}
+                        color={account.color}
+                        label={account.classification === "credit" ? "Available credit" : "Balance"}
+                        amount={money(
+                          account.classification === "credit" && account.creditLimit
+                            ? account.creditLimit - account.balance
+                            : account.balance,
+                          account.currencyCode ?? currency
+                        )}
+                        usage={
+                          account.classification === "credit" && account.creditLimit
+                            ? account.balance / account.creditLimit
+                            : undefined
+                        }
+                        onClick={() => navigate(`/wallet/${account.id}`)}
                       />
-                      <div>
-                        <p className="text-[1.05rem] font-bold text-slate-900">{item.title}</p>
-                        <p className="text-lg text-slate-400">
-                          {new Date(item.dueDate).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
-                        </p>
-                      </div>
                     </div>
-                    <div className="text-right">
-                      {index === 0 ? (
-                        <p className="text-sm font-bold uppercase tracking-[0.16em] text-rose-400">
-                          {item.dueInDays <= 0 ? "Due now" : `${item.dueInDays} days left`}
-                        </p>
-                      ) : null}
-                      <p className="text-[1.2rem] font-black text-slate-500">
-                        {formatCurrency(item.amount, store.settings.currencyCode)}
-                      </p>
-                    </div>
-                  </div>
+                  ))}
+              </div>
+              <div className="mt-3 grid grid-cols-3 gap-2">
+                {[
+                  { label: "Open", icon: ArrowTopRightOnSquareIcon, to: `/wallet/${stackAccounts[0].id}` },
+                  { label: "Expense", icon: MinusCircleIcon, to: "/transactions" },
+                  { label: "Transfer", icon: ArrowsRightLeftIcon, to: "/transactions" },
+                ].map((action) => (
+                  <button
+                    key={action.label}
+                    type="button"
+                    onClick={() => navigate(action.to)}
+                    className="flex min-h-[44px] items-center justify-center gap-2 rounded-xl border border-line bg-raised text-sm font-semibold text-ink transition hover:bg-brand/10"
+                  >
+                    <action.icon className="h-4 w-4 text-brand" />
+                    {action.label}
+                  </button>
                 ))}
               </div>
+            </>
+          ) : (
+            <EmptyState
+              title="Add your first wallet"
+              description="Track cash, bank, e-wallet, and credit accounts in one place."
+              actionLabel="Add account"
+              onAction={() => navigate("/wallet")}
+              illustration={<Susi mood="think" size={72} />}
+            />
+          )}
+        </Card>
+
+        <Card title="Recent activity" action={<CardLink to="/transactions">View all →</CardLink>}>
+          {recent.length ? (
+            <div className="divide-y divide-line">
+              {recent.map((transaction) => {
+                const signed =
+                  transaction.type === "income"
+                    ? transaction.amount
+                    : transaction.type === "expense"
+                    ? -transaction.amount
+                    : 0;
+                const Icon =
+                  transaction.type === "income"
+                    ? ArrowDownLeftIcon
+                    : transaction.type === "expense"
+                    ? ArrowUpRightIcon
+                    : ArrowsRightLeftIcon;
+                return (
+                  <ActivityRow
+                    key={transaction.id}
+                    icon={<Icon className="h-5 w-5" />}
+                    title={transaction.title}
+                    meta={`${accountName(transaction.accountId)} · ${new Date(transaction.date).toLocaleDateString(undefined, { month: "short", day: "numeric" })}`}
+                    amount={signed}
+                    formatted={`${signed > 0 ? "+" : signed < 0 ? "−" : ""}${money(transaction.amount)}`}
+                  />
+                );
+              })}
+            </div>
+          ) : (
+            <EmptyState
+              title="No activity yet"
+              description="Your latest income, expenses, and transfers show up here."
+              actionLabel="Add transaction"
+              onAction={() => navigate("/transactions")}
+            />
+          )}
+        </Card>
+      </div>
+
+      <Card title="This month">
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          {[
+            { label: "Income", value: money(monthly.income), tone: "bg-pos/15 text-pos", icon: "↑" },
+            { label: "Expenses", value: money(monthly.expenses), tone: "bg-neg/15 text-neg", icon: "↓" },
+            { label: "Saved", value: money(Math.max(0, monthly.balance)), tone: "bg-warn/15 text-warn", icon: "◎" },
+            { label: "Savings rate", value: `${Math.round(monthly.savingsRate)}%`, tone: "bg-brand/15 text-brand", icon: "%" },
+          ].map((tile) => (
+            <div key={tile.label} className="flex items-center gap-3 rounded-2xl bg-raised p-3">
+              <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-extrabold ${tile.tone}`}>
+                {tile.icon}
+              </span>
+              <span className="min-w-0">
+                <span className="block text-xs text-muted">{tile.label}</span>
+                <span className="block truncate text-sm font-bold text-ink">{tile.value}</span>
+              </span>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-4 grid gap-4 md:grid-cols-[2fr_1fr]">
+          <div className="rounded-2xl bg-raised p-4">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">Last 7 days spending</p>
+            <div className="mt-4 flex h-24 items-end justify-between gap-2">
+              {weekBars.map((bar, index) => (
+                <div key={index} className="flex flex-1 flex-col items-center gap-2">
+                  <div
+                    className={`w-2.5 rounded-full ${bar.active ? "bg-brand" : "bg-brand/30"}`}
+                    style={{ height: `${bar.height}px` }}
+                  />
+                  <span className={`text-xs font-semibold ${bar.active ? "text-ink" : "text-muted"}`}>{bar.day}</span>
+                </div>
+              ))}
             </div>
           </div>
-        ) : (
-          <div className="mt-6">
-            <EmptyState
-              title="Nothing upcoming yet"
-              description="Recurring bills, debt payments, and planned payments will land here once you start planning the month."
-              actionLabel="Open plan"
-              onAction={() => navigate("/plan")}
-            />
+          <div className="flex flex-col justify-center rounded-2xl bg-raised p-4">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">Today</p>
+            <p className={`mt-2 truncate text-2xl font-extrabold ${todayTotal < 0 ? "text-neg" : "text-ink"}`}>
+              {money(todayTotal)}
+            </p>
+            <p className="mt-1 text-xs text-muted">Income minus expenses</p>
           </div>
-        )}
-      </section>
+        </div>
+      </Card>
 
-      <div className="grid gap-4 md:grid-cols-3">
-        <section className="rounded-[2rem] bg-white/90 p-5 shadow-[0_22px_60px_rgba(148,163,184,0.14)]">
-          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-400">Balance</p>
-          <p className="mt-3 text-[2.1rem] font-black tracking-[-0.05em] text-slate-900">
-            {formatCurrency(monthly.balance, store.settings.currencyCode)}
-          </p>
-        </section>
-        <section className="rounded-[2rem] bg-white/90 p-5 shadow-[0_22px_60px_rgba(148,163,184,0.14)]">
-          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-400">Budget health</p>
-          <p className="mt-3 text-[2.1rem] font-black tracking-[-0.05em] text-slate-900">
-            {monthly.planned ? `${Math.round((monthly.spentAgainstBudget / monthly.planned) * 100)}%` : "Set up"}
-          </p>
-        </section>
-        <section className="rounded-[2rem] bg-white/90 p-5 shadow-[0_22px_60px_rgba(148,163,184,0.14)]">
-          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-400">Goals in motion</p>
-          <p className="mt-3 text-[2.1rem] font-black tracking-[-0.05em] text-slate-900">
-            {goals.length}
-          </p>
-        </section>
-      </div>
+      <Card title="Upcoming" action={<CardLink to="/plan">Plan →</CardLink>}>
+        {upcoming.length ? (
+          <div className="divide-y divide-line">
+            {upcoming.slice(0, 4).map((item) => {
+              const isIncome =
+                store.recurringBills.find((bill) => bill.id === item.id)?.type === "income";
+              return (
+                <ActivityRow
+                  key={`${item.source}-${item.id}`}
+                  icon={isIncome ? <ArrowDownLeftIcon className="h-5 w-5" /> : <ArrowUpRightIcon className="h-5 w-5" />}
+                  title={item.title}
+                  meta={item.dueInDays <= 0 ? "Due now" : `In ${item.dueInDays} days`}
+                  amount={isIncome ? item.amount : -item.amount}
+                  formatted={money(item.amount)}
+                />
+              );
+            })}
+          </div>
+        ) : (
+          <EmptyState
+            title="Nothing upcoming yet"
+            description="Recurring bills, debt payments, and planned payments will land here once you start planning the month."
+            actionLabel="Open plan"
+            onAction={() => navigate("/plan")}
+          />
+        )}
+      </Card>
     </section>
   );
 }

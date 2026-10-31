@@ -12,18 +12,18 @@ export function OnboardingGuide() {
   if (checklist.completed === checklist.total) return null;
 
   return (
-    <section className="rounded-[2rem] border border-white/10 bg-white/5 p-5">
-      <p className="text-sm font-semibold uppercase tracking-[0.2em] text-teal-200/80">
+    <section className="rounded-3xl border border-line bg-surface p-4 md:p-5">
+      <p className="text-sm font-semibold uppercase tracking-[0.14em] text-pos">
         Onboarding
       </p>
       <div className="mt-2 flex items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl font-semibold text-white">Finish your money setup</h2>
-          <p className="mt-1 text-sm text-slate-400">
+          <h2 className="text-base font-semibold text-ink">Finish your money setup</h2>
+          <p className="mt-1 text-sm text-muted">
             A few small setup steps make budgets, reminders, and insights much more useful.
           </p>
         </div>
-        <span className="rounded-full border border-white/10 bg-slate-950/60 px-3 py-1 text-sm text-slate-200">
+        <span className="rounded-full border border-line bg-raised px-3 py-1 text-sm text-ink">
           {checklist.completed}/{checklist.total}
         </span>
       </div>
@@ -38,19 +38,19 @@ export function OnboardingGuide() {
             onClick={() => navigate(step.href)}
             className={`flex w-full items-center justify-between rounded-3xl border px-4 py-3 text-left transition ${
               step.done
-                ? "border-emerald-400/20 bg-emerald-400/10"
-                : "border-white/10 bg-slate-950/60 hover:bg-slate-900"
+                ? "border-pos/30 bg-pos/10"
+                : "border-line bg-raised hover:bg-brand/10"
             }`}
           >
             <div className="flex items-center gap-3">
               <CheckCircleIcon
-                className={`h-5 w-5 ${step.done ? "text-emerald-300" : "text-slate-600"}`}
+                className={`h-5 w-5 ${step.done ? "text-pos" : "text-muted"}`}
               />
-              <span className={`text-sm ${step.done ? "text-emerald-100" : "text-white"}`}>
+              <span className={`text-sm ${step.done ? "text-pos" : "text-ink"}`}>
                 {step.label}
               </span>
             </div>
-            <span className="text-xs uppercase tracking-[0.2em] text-slate-500">
+            <span className="text-xs uppercase tracking-[0.14em] text-muted">
               {step.done ? "Done" : "Open"}
             </span>
           </button>

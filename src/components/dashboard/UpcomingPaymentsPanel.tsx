@@ -10,16 +10,16 @@ export function UpcomingPaymentsPanel() {
   const upcomingPayments = getUpcomingPayments(store, 14).slice(0, 5);
 
   return (
-    <section className="rounded-[2rem] border border-white/10 bg-white/5 p-5">
+    <section className="rounded-3xl border border-line bg-surface p-4 md:p-5">
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-2">
-          <CalendarDaysIcon className="h-5 w-5 text-amber-300" />
-          <p className="text-lg font-semibold text-white">Upcoming payments</p>
+          <CalendarDaysIcon className="h-5 w-5 text-warn" />
+          <p className="text-base font-semibold text-ink">Upcoming payments</p>
         </div>
         <button
           type="button"
           onClick={() => navigate("/plan")}
-          className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/10"
+          className="rounded-full border border-line bg-raised px-4 py-2 text-sm font-semibold text-ink transition hover:bg-raised"
         >
           Open plan
         </button>
@@ -28,19 +28,19 @@ export function UpcomingPaymentsPanel() {
         {upcomingPayments.map((payment) => (
           <div
             key={`${payment.source}-${payment.id}`}
-            className="flex items-center justify-between rounded-3xl border border-white/10 bg-slate-950/60 px-4 py-3"
+            className="flex items-center justify-between rounded-3xl border border-line bg-raised px-4 py-3"
           >
             <div>
-              <p className="font-semibold text-white">{payment.title}</p>
-              <p className="text-sm text-slate-400">
+              <p className="font-semibold text-ink">{payment.title}</p>
+              <p className="text-sm text-muted">
                 {payment.note} · {payment.dueInDays <= 0 ? "Due now" : `${payment.dueInDays} days left`}
               </p>
             </div>
             <div className="text-right">
-              <p className="font-semibold text-white">
+              <p className="font-semibold text-ink">
                 {formatCurrency(payment.amount, store.settings.currencyCode)}
               </p>
-              <p className="text-xs text-slate-500">{payment.dueDate}</p>
+              <p className="text-xs text-muted">{payment.dueDate}</p>
             </div>
           </div>
         ))}
