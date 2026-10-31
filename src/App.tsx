@@ -5,7 +5,8 @@ import ToastContainer from "./components/Toast";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { useStore } from "./store/useStore";
 import { AppShell } from "./components/layout/AppShell";
-import { APP_BRANDING } from "./config/app";
+import { THEME_COLORS } from "./config/app";
+import { resolveTheme } from "./lib/ui";
 
 const Auth = lazy(() => import("./pages/Auth"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
@@ -21,28 +22,27 @@ function AppContent() {
 
   useEffect(() => {
     const htmlEl = document.documentElement;
-    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    const shouldUseDark =
-      settings.themeMode === "dark" ||
-      (settings.themeMode === "system" && prefersDark);
+    const media = window.matchMedia("(prefers-color-scheme: dark)");
+
+    const applyTheme = () => {
+      const theme = resolveTheme(settings.themeMode, media.matches);
+      htmlEl.classList.toggle("dark", theme === "dark");
+      document
+        .querySelector('meta[name="theme-color"]')
+        ?.setAttribute("content", theme === "dark" ? THEME_COLORS.dark : THEME_COLORS.light);
+    };
 
     htmlEl.lang = "en";
-    if (shouldUseDark) {
-      htmlEl.classList.add("dark");
-    } else {
-      htmlEl.classList.remove("dark");
-    }
-    const themeMeta = document.querySelector('meta[name="theme-color"]');
-    if (themeMeta) {
-      themeMeta.setAttribute("content", APP_BRANDING.themeColor);
-    }
+    applyTheme();
+    media.addEventListener("change", applyTheme);
+    return () => media.removeEventListener("change", applyTheme);
   }, [settings.themeMode]);
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white">
+    <div className="min-h-screen bg-canvas text-ink">
       <Suspense
         fallback={
-          <div className="flex min-h-screen items-center justify-center bg-slate-950 text-slate-400">
+          <div className="flex min-h-screen items-center justify-center bg-canvas text-muted">
             Loading...
           </div>
         }

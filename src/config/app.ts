@@ -3,9 +3,15 @@ export const APP_BRANDING = {
   shortName: "BudgetPro",
   description:
     "A mobile-first budgeting app for spending control, savings goals, and recurring bills.",
-  themeColor: "#0f766e",
-  backgroundColor: "#061312",
-  surfaceColor: "#0d1f1d",
+  themeColor: "#0b0d0c",
+  backgroundColor: "#0b0d0c",
+  surfaceColor: "#141715",
+};
+
+// Must match --bg in src/index.css; used for the PWA status bar.
+export const THEME_COLORS = {
+  dark: "#0b0d0c",
+  light: "#f4f6f2",
 };
 
 export const APP_THEME = {

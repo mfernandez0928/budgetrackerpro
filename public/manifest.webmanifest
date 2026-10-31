@@ -4,8 +4,8 @@
   "description": "Mobile-first budgeting with category budgets, recurring bills, savings goals, and offline-ready installable access.",
   "start_url": "/dashboard",
   "display": "standalone",
-  "background_color": "#061312",
-  "theme_color": "#0f766e",
+  "background_color": "#0b0d0c",
+  "theme_color": "#0b0d0c",
   "orientation": "portrait-primary",
   "icons": [
     {
