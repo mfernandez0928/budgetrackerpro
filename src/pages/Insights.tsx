@@ -4,6 +4,7 @@ import { CategorySpendChart } from "../components/insights/CategorySpendChart";
 import { TrendCharts } from "../components/insights/TrendCharts";
 import { useStore } from "../store/useStore";
 import { formatCurrency, getMonthlyInsightSummary, getMonthlySummary } from "../lib/finance";
+import { PageIntro } from "../components/ui/PageIntro";
 import { StatCard } from "../components/ui/StatCard";
 
 export default function Insights() {
@@ -12,8 +13,9 @@ export default function Insights() {
   const summary = getMonthlySummary(store);
 
   return (
-    <section className="space-y-6">
-      <div className="grid gap-4 md:grid-cols-3">
+    <section className="space-y-4 md:space-y-5">
+      <PageIntro title="Insights" />
+      <div className="grid gap-3 md:grid-cols-3 md:gap-4">
         <StatCard
           label="Savings rate"
           value={`${Math.round(summary.savingsRate)}%`}
