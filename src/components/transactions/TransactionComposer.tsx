@@ -106,14 +106,14 @@ export function TransactionComposer() {
   }
 
   return (
-    <section className="rounded-[2rem] border border-white/10 bg-white/5 p-5 shadow-xl shadow-slate-950/40">
+    <section className="rounded-3xl border border-line bg-surface p-4 md:p-5">
       <SectionHeader
         eyebrow="Quick capture"
         title="Fast transaction entry"
         description="Designed for one-thumb use on mobile while keeping richer details available."
       />
       <form className="space-y-4" onSubmit={handleSubmit}>
-        <div className="grid grid-cols-3 gap-2 rounded-2xl border border-white/10 bg-slate-950/60 p-1">
+        <div className="grid grid-cols-3 gap-2 rounded-2xl border border-line bg-raised p-1">
           {(["expense", "income", "transfer"] as TransactionType[]).map((type) => (
             <button
               key={type}
@@ -126,10 +126,10 @@ export function TransactionComposer() {
                   categoryId: "",
                 }))
               }
-              className={`rounded-2xl px-3 py-3 text-sm font-semibold capitalize transition ${
+              className={`min-h-[44px] rounded-xl px-3 text-sm font-semibold capitalize transition ${
                 form.type === type
-                  ? "bg-teal-400 text-slate-950"
-                  : "text-slate-300 hover:bg-white/5"
+                  ? "bg-brand text-on-brand"
+                  : "text-muted hover:text-ink"
               }`}
             >
               {type}
@@ -139,44 +139,44 @@ export function TransactionComposer() {
 
         <div className="grid gap-3 md:grid-cols-2">
           <label className="space-y-2 text-sm">
-            <span className="text-slate-300">What happened?</span>
+            <span className="text-muted">What happened?</span>
             <input
               value={form.title}
               onChange={(event) => setForm((current) => ({ ...current, title: event.target.value }))}
               placeholder="Groceries, salary, internet bill"
-              className="w-full rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 text-white outline-none transition placeholder:text-slate-500 focus:border-teal-400"
+              className="w-full rounded-2xl border border-line bg-raised px-4 py-3 text-ink outline-none transition placeholder:text-muted focus:border-brand"
             />
           </label>
           <label className="space-y-2 text-sm">
-            <span className="text-slate-300">Amount</span>
+            <span className="text-muted">Amount</span>
             <input
               inputMode="decimal"
               value={form.amount}
               onChange={(event) => setForm((current) => ({ ...current, amount: event.target.value }))}
               placeholder="0.00"
-              className="w-full rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 text-white outline-none transition placeholder:text-slate-500 focus:border-teal-400"
+              className="w-full rounded-2xl border border-line bg-raised px-4 py-3 text-2xl font-bold text-ink outline-none transition placeholder:text-muted focus:border-brand"
             />
           </label>
         </div>
 
         <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
           <label className="space-y-2 text-sm">
-            <span className="text-slate-300">Date</span>
+            <span className="text-muted">Date</span>
             <input
               type="date"
               value={form.date}
               onChange={(event) => setForm((current) => ({ ...current, date: event.target.value }))}
-              className="w-full rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 text-white outline-none transition focus:border-teal-400"
+              className="w-full rounded-2xl border border-line bg-raised px-4 py-3 text-ink outline-none transition focus:border-brand"
             />
           </label>
           <label className="space-y-2 text-sm">
-            <span className="text-slate-300">Category</span>
+            <span className="text-muted">Category</span>
             <select
               value={selectedCategoryId}
               onChange={(event) =>
                 setForm((current) => ({ ...current, categoryId: event.target.value }))
               }
-              className="w-full rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 text-white outline-none transition focus:border-teal-400"
+              className="w-full rounded-2xl border border-line bg-raised px-4 py-3 text-ink outline-none transition focus:border-brand"
             >
               {availableCategories.map((category) => (
                 <option key={category.id} value={category.id}>
@@ -186,13 +186,13 @@ export function TransactionComposer() {
             </select>
           </label>
           <label className="space-y-2 text-sm">
-            <span className="text-slate-300">From account</span>
+            <span className="text-muted">From account</span>
             <select
               value={form.accountId}
               onChange={(event) =>
                 setForm((current) => ({ ...current, accountId: event.target.value }))
               }
-              className="w-full rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 text-white outline-none transition focus:border-teal-400"
+              className="w-full rounded-2xl border border-line bg-raised px-4 py-3 text-ink outline-none transition focus:border-brand"
             >
               {accounts.map((account) => (
                 <option key={account.id} value={account.id}>
@@ -203,13 +203,13 @@ export function TransactionComposer() {
           </label>
           {form.type === "transfer" ? (
             <label className="space-y-2 text-sm">
-              <span className="text-slate-300">To account</span>
+              <span className="text-muted">To account</span>
               <select
                 value={form.toAccountId}
                 onChange={(event) =>
                   setForm((current) => ({ ...current, toAccountId: event.target.value }))
                 }
-                className="w-full rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 text-white outline-none transition focus:border-teal-400"
+                className="w-full rounded-2xl border border-line bg-raised px-4 py-3 text-ink outline-none transition focus:border-brand"
               >
                 {accounts
                   .filter((account) => account.id !== form.accountId)
@@ -222,7 +222,7 @@ export function TransactionComposer() {
             </label>
           ) : (
             <label className="space-y-2 text-sm">
-              <span className="text-slate-300">Payment method</span>
+              <span className="text-muted">Payment method</span>
               <select
                 value={form.paymentMethod}
                 onChange={(event) =>
@@ -231,7 +231,7 @@ export function TransactionComposer() {
                     paymentMethod: event.target.value as PaymentMethod,
                   }))
                 }
-                className="w-full rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 text-white outline-none transition focus:border-teal-400"
+                className="w-full rounded-2xl border border-line bg-raised px-4 py-3 text-ink outline-none transition focus:border-brand"
               >
                 {paymentMethods.filter((method) => method !== "transfer").map((method) => (
                   <option key={method} value={method}>
@@ -244,20 +244,20 @@ export function TransactionComposer() {
         </div>
 
         <label className="space-y-2 text-sm">
-          <span className="text-slate-300">Notes</span>
+          <span className="text-muted">Notes</span>
           <textarea
             value={form.notes}
             onChange={(event) => setForm((current) => ({ ...current, notes: event.target.value }))}
             rows={3}
             placeholder="Optional notes, merchant, or reminder details"
-            className="w-full rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 text-white outline-none transition placeholder:text-slate-500 focus:border-teal-400"
+            className="w-full rounded-2xl border border-line bg-raised px-4 py-3 text-ink outline-none transition placeholder:text-muted focus:border-brand"
           />
         </label>
 
         <div className="flex flex-col gap-3 sm:flex-row">
           <button
             type="submit"
-            className="inline-flex items-center justify-center gap-2 rounded-full bg-teal-400 px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-teal-300"
+            className="inline-flex items-center justify-center gap-2 rounded-full bg-brand px-5 py-3 text-sm font-semibold text-on-brand transition hover:brightness-110"
           >
             <PlusIcon className="h-5 w-5" />
             Save transaction
@@ -265,7 +265,7 @@ export function TransactionComposer() {
           <button
             type="button"
             onClick={resetForm}
-            className="inline-flex items-center justify-center gap-2 rounded-full border border-white/10 bg-white/5 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
+            className="inline-flex items-center justify-center gap-2 rounded-full border border-line bg-raised px-5 py-3 text-sm font-semibold text-ink transition hover:bg-raised"
           >
             <ArrowPathRoundedSquareIcon className="h-5 w-5" />
             Reset
