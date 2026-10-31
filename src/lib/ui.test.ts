@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
+  accountDetails,
+  accountInitials,
   clampPercent,
   getActiveNavKey,
   groupByDay,
@@ -126,5 +128,35 @@ describe("nextFocusIndex", () => {
   it("pulls focus back in when it is outside the dialog", () => {
     expect(nextFocusIndex(-1, 3, false)).toBe(0);
     expect(nextFocusIndex(-1, 3, true)).toBe(2);
+  });
+});
+
+describe("accountInitials", () => {
+  it("uses the icon, upper-cased and capped at 3 chars", () => {
+    expect(accountInitials("GCash", "gc", "EUR")).toBe("GC");
+    expect(accountInitials("Bitcoin", "btc1", "EUR")).toBe("BTC");
+  });
+
+  it("falls back to the first two letters of the name", () => {
+    expect(accountInitials("Main Bank", undefined, "EUR")).toBe("MA");
+  });
+
+  it("swaps a currency-symbol icon for the app currency's symbol", () => {
+    expect(accountInitials("Cash Wallet", "₱", "EUR")).toBe("€");
+    expect(accountInitials("Cash Wallet", "₱", "USD")).toBe("$");
+  });
+});
+
+describe("accountDetails", () => {
+  it("replaces a stored currency code with the app currency", () => {
+    expect(accountDetails("Debit • PHP • 1.25% yearly", "debit", "EUR")).toBe("Debit • EUR • 1.25% yearly");
+  });
+
+  it("leaves details without a currency code alone", () => {
+    expect(accountDetails("Stocks • AAPL", "debit", "EUR")).toBe("Stocks • AAPL");
+  });
+
+  it("builds a label when there are no details", () => {
+    expect(accountDetails(undefined, "credit", "GBP")).toBe("credit • GBP");
   });
 });

@@ -13,6 +13,7 @@ import { PickerSheet } from "../components/ui/PickerSheet";
 import { showToast } from "../components/Toast";
 import { useStore } from "../store/useStore";
 import { getTodayISO } from "../lib/date";
+import { accountInitials } from "../lib/ui";
 import { formatCurrency, getAccountBalances, getAccountFlowSummary, getUpcomingPayments } from "../lib/finance";
 
 type Sheet = "edit" | "delete" | "transfer" | null;
@@ -51,12 +52,12 @@ export default function WalletAccountDetail() {
     );
   }
 
+  const currencyCode = store.settings.currencyCode;
   const flow = getAccountFlowSummary(store, account.id);
   const spendable = account.classification === "credit"
     ? Math.max(0, (account.creditLimit ?? 0) - account.balance)
     : account.balance + flow.income;
   const upcoming = getUpcomingPayments(store, 30).filter((item) => item.source !== "debt").slice(0, 4);
-  const currencyCode = account.currencyCode ?? store.settings.currencyCode;
   const otherAccounts = accounts.filter((item) => item.id !== account.id);
   const linkedCount = store.transactions.filter(
     (item) => item.accountId === account.id || item.toAccountId === account.id
@@ -167,10 +168,10 @@ export default function WalletAccountDetail() {
       <div className="mx-auto w-full max-w-md">
         <WalletCard
           name={account.name}
-          initials={(account.icon ?? account.name.slice(0, 2)).slice(0, 3).toUpperCase()}
+          initials={accountInitials(account.name, account.icon, currencyCode)}
           color={account.color}
           label="Balance"
-          amount={formatCurrency(account.balance, account.currencyCode ?? store.settings.currencyCode)}
+          amount={formatCurrency(account.balance, currencyCode)}
           usage={
             account.classification === "credit" && account.creditLimit
               ? account.balance / account.creditLimit
@@ -206,7 +207,7 @@ export default function WalletAccountDetail() {
           <div className="relative flex h-48 w-48 items-center justify-center rounded-full bg-[conic-gradient(rgb(var(--brand))_0_76%,rgb(var(--neg))_76%_100%)]">
             <div className="flex h-32 w-32 flex-col items-center justify-center rounded-full bg-surface">
               <p className="text-sm font-semibold text-brand">
-                {formatCurrency(flow.net, account.currencyCode ?? store.settings.currencyCode)}
+                {formatCurrency(flow.net, currencyCode)}
               </p>
               <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">Net in</p>
             </div>
@@ -219,13 +220,13 @@ export default function WalletAccountDetail() {
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.14em] text-muted">Net balance</p>
             <p className="mt-2 text-2xl font-extrabold text-ink">
-              {formatCurrency(account.balance, account.currencyCode ?? store.settings.currencyCode)}
+              {formatCurrency(account.balance, currencyCode)}
             </p>
           </div>
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.14em] text-muted">Spendable</p>
             <p className="mt-2 text-2xl font-extrabold text-ink">
-              {formatCurrency(spendable, account.currencyCode ?? store.settings.currencyCode)}
+              {formatCurrency(spendable, currencyCode)}
             </p>
           </div>
         </div>
@@ -240,13 +241,13 @@ export default function WalletAccountDetail() {
             <div className="rounded-2xl bg-surface p-4">
               <p className="text-sm font-semibold uppercase tracking-[0.14em] text-muted">Expected in</p>
               <p className="mt-2 text-xl font-bold tracking-tight text-brand">
-                {formatCurrency(flow.income, account.currencyCode ?? store.settings.currencyCode)}
+                {formatCurrency(flow.income, currencyCode)}
               </p>
             </div>
             <div className="rounded-2xl bg-surface p-4">
               <p className="text-sm font-semibold uppercase tracking-[0.14em] text-muted">Expected out</p>
               <p className="mt-2 text-xl font-bold tracking-tight text-neg">
-                -{formatCurrency(flow.expenses, account.currencyCode ?? store.settings.currencyCode)}
+                -{formatCurrency(flow.expenses, currencyCode)}
               </p>
             </div>
           </div>
@@ -265,7 +266,7 @@ export default function WalletAccountDetail() {
           <div className="mt-5 rounded-2xl bg-raised p-5">
             <p className="text-sm font-semibold uppercase tracking-[0.14em] text-muted">Live via FXRatesAPI</p>
             <p className="mt-2 text-xl font-bold tracking-tight text-ink">
-              P{account.liveRate.toLocaleString()}
+              {formatCurrency(account.liveRate, currencyCode)}
             </p>
             {account.liveRateUpdatedAt ? (
               <p className="mt-2 text-sm text-muted">{account.liveRateUpdatedAt}</p>

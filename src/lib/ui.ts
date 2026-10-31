@@ -1,4 +1,4 @@
-import type { ThemeMode } from "../types/finance";
+import type { CurrencyCode, ThemeMode } from "../types/finance";
 
 export function resolveTheme(mode: ThemeMode, prefersDark: boolean): "dark" | "light" {
   if (mode === "system") return prefersDark ? "dark" : "light";
@@ -98,4 +98,19 @@ export function nextFocusIndex(current: number, count: number, backwards: boolea
   if (backwards && current === 0) return count - 1;
   if (!backwards && current === count - 1) return 0;
   return null;
+}
+
+const CURRENCY_SYMBOLS: Record<CurrencyCode, string> = { PHP: "₱", USD: "$", EUR: "€", GBP: "£" };
+const SYMBOL_ICONS = new Set(Object.values(CURRENCY_SYMBOLS));
+
+// Accounts store a currency symbol as their icon (e.g. the default cash wallet); show the app currency's instead.
+export function accountInitials(name: string, icon: string | undefined, currency: CurrencyCode): string {
+  if (icon && SYMBOL_ICONS.has(icon)) return CURRENCY_SYMBOLS[currency];
+  return (icon ?? name.slice(0, 2)).slice(0, 3).toUpperCase();
+}
+
+// Stored details embed the currency picked at creation ("Debit • PHP"); the app formats everything in one currency.
+export function accountDetails(details: string | undefined, classification: string, currency: CurrencyCode): string {
+  if (!details) return `${classification} • ${currency}`;
+  return details.replace(/\b(PHP|USD|EUR|GBP)\b/g, currency);
 }

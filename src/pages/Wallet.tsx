@@ -13,6 +13,7 @@ import { showToast } from "../components/Toast";
 import { APP_BRANDING } from "../config/app";
 import { ACCOUNT_PRESETS } from "../lib/catalog";
 import { formatCurrency, getWalletSummary } from "../lib/finance";
+import { accountDetails, accountInitials } from "../lib/ui";
 import { useStore } from "../store/useStore";
 import type { AccountType } from "../types/finance";
 
@@ -41,10 +42,6 @@ function getDailyBars(values: number[]) {
       active: index === values.length - 1,
     };
   });
-}
-
-function initialsFor(name: string, icon?: string) {
-  return (icon ?? name.slice(0, 2)).slice(0, 3).toUpperCase();
 }
 
 export default function Wallet() {
@@ -213,10 +210,10 @@ export default function Wallet() {
               <WalletCard
                 key={account.id}
                 name={account.name}
-                initials={initialsFor(account.name, account.icon)}
+                initials={accountInitials(account.name, account.icon, currency)}
                 color={account.color}
                 label={isCredit ? "Available credit" : "Balance"}
-                amount={money(isCredit ? limit - account.balance : account.balance, account.currencyCode ?? currency)}
+                amount={money(isCredit ? limit - account.balance : account.balance)}
                 usage={isCredit ? account.balance / limit : undefined}
                 onClick={() => navigate(`/wallet/${account.id}`)}
               />
@@ -234,7 +231,7 @@ export default function Wallet() {
                 className="flex min-h-[60px] w-full items-center gap-3 py-2 text-left"
               >
                 <BrandMark
-                  label={initialsFor(account.name, account.icon)}
+                  label={accountInitials(account.name, account.icon, currency)}
                   color={account.color}
                   textColor="#ffffff"
                   size="sm"
@@ -242,11 +239,11 @@ export default function Wallet() {
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-sm font-semibold text-ink">{account.name}</span>
                   <span className="block truncate text-xs text-muted">
-                    {account.details ?? `${account.classification} • ${account.currencyCode ?? currency}`}
+                    {accountDetails(account.details, account.classification, currency)}
                   </span>
                 </span>
                 <span className="shrink-0 text-sm font-bold text-ink">
-                  {money(account.balance, account.currencyCode ?? currency)}
+                  {money(account.balance)}
                 </span>
               </button>
             ))}

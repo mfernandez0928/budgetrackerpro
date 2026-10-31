@@ -23,6 +23,7 @@ import {
   getUpcomingPayments,
   getWalletSummary,
 } from "../lib/finance";
+import { accountInitials } from "../lib/ui";
 import { daysUntil, getTodayISO } from "../lib/date";
 
 const HIDDEN = "••••••";
@@ -68,10 +69,6 @@ function sparklinePath(values: number[]) {
   return values
     .map((value, index) => `${index === 0 ? "M" : "L"}${Math.round(index * step)} ${Math.round(62 - (value / max) * 54)}`)
     .join(" ");
-}
-
-function accountInitials(name: string, icon?: string) {
-  return (icon ?? name.slice(0, 2)).slice(0, 3).toUpperCase();
 }
 
 export default function Dashboard() {
@@ -260,14 +257,14 @@ export default function Dashboard() {
                     >
                       <WalletCard
                         name={account.name}
-                        initials={accountInitials(account.name, account.icon)}
+                        initials={accountInitials(account.name, account.icon, currency)}
                         color={account.color}
                         label={account.classification === "credit" ? "Available credit" : "Balance"}
                         amount={money(
                           account.classification === "credit" && account.creditLimit
                             ? account.creditLimit - account.balance
                             : account.balance,
-                          account.currencyCode ?? currency
+                          currency
                         )}
                         usage={
                           account.classification === "credit" && account.creditLimit
