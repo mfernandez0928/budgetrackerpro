@@ -12,12 +12,12 @@ export function SectionHeader({
   return (
     <div className="mb-4">
       {eyebrow ? (
-        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-teal-300/80">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-brand">
           {eyebrow}
         </p>
       ) : null}
-      <h2 className="mt-1 text-xl font-semibold text-white">{title}</h2>
-      {description ? <p className="mt-1 text-sm text-slate-400">{description}</p> : null}
+      <h2 className="mt-1 text-base font-semibold text-ink">{title}</h2>
+      {description ? <p className="mt-1 text-sm text-muted">{description}</p> : null}
     </div>
   );
 }

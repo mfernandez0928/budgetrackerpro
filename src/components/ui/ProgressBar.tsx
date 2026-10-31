@@ -1,18 +1,28 @@
+import { clampPercent, progressTone } from "../../lib/ui";
+
 interface ProgressBarProps {
   value: number;
+  alertThreshold?: number;
   colorClass?: string;
 }
 
+const toneColor = {
+  ok: "bg-brand",
+  warn: "bg-warn",
+  over: "bg-neg",
+};
+
 export function ProgressBar({
   value,
-  colorClass = "bg-teal-400",
+  alertThreshold = 0.8,
+  colorClass,
 }: ProgressBarProps) {
-  const percent = Math.max(0, Math.min(100, Math.round(value * 100)));
+  const percent = clampPercent(value);
 
   return (
-    <div className="h-2 overflow-hidden rounded-full bg-white/10">
+    <div className="h-2 overflow-hidden rounded-full bg-raised">
       <div
-        className={`h-full rounded-full transition-all ${colorClass}`}
+        className={`h-full rounded-full transition-all ${colorClass ?? toneColor[progressTone(value, alertThreshold)]}`}
         style={{ width: `${percent}%` }}
       />
     </div>

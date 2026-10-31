@@ -19,7 +19,7 @@ export function BrandMark({
 
   return (
     <div
-      className={`flex items-center justify-center rounded-[18px] font-extrabold shadow-sm ${sizeMap[size]}`}
+      className={`flex items-center justify-center shrink-0 rounded-2xl font-extrabold ${sizeMap[size]}`}
       style={{ backgroundColor: color, color: textColor }}
     >
       {label}

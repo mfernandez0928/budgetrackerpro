@@ -46,18 +46,18 @@ function useToasts() {
 export default function ToastContainer() {
   const toasts = useToasts();
   const toneMap: Record<ToastType, string> = {
-    success: "border-emerald-400/20 bg-emerald-400/10 text-emerald-100",
-    error: "border-rose-400/20 bg-rose-400/10 text-rose-100",
-    warning: "border-amber-400/20 bg-amber-400/10 text-amber-100",
-    info: "border-sky-400/20 bg-sky-400/10 text-sky-100",
+    success: "border-pos/30 text-pos",
+    error: "border-neg/30 text-neg",
+    warning: "border-warn/30 text-warn",
+    info: "border-line text-ink",
   };
 
   return (
-    <div className="pointer-events-none fixed right-4 top-4 z-50 flex max-w-sm flex-col gap-3">
+    <div className="pt-safe pointer-events-none fixed right-4 top-4 z-[60] flex max-w-sm flex-col gap-3">
       {toasts.map((toast) => (
         <div
           key={toast.id}
-          className={`pointer-events-auto rounded-2xl border px-4 py-3 text-sm shadow-2xl backdrop-blur ${toneMap[toast.type]}`}
+          className={`pointer-events-auto rounded-2xl border bg-surface px-4 py-3 text-sm font-medium shadow-xl ${toneMap[toast.type]}`}
           role="status"
           aria-live="polite"
         >
