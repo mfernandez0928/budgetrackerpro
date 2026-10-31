@@ -1,11 +1,16 @@
-import { EllipsisHorizontalIcon, PlusIcon } from "@heroicons/react/24/outline";
+import { EyeIcon, EyeSlashIcon, PlusIcon } from "@heroicons/react/24/outline";
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Susi } from "../components/illustrations/Susi";
 import { BrandMark } from "../components/ui/BrandMark";
+import { Card } from "../components/ui/Card";
+import { EmptyState } from "../components/ui/EmptyState";
 import { PageIntro } from "../components/ui/PageIntro";
 import { PickerSheet } from "../components/ui/PickerSheet";
+import { Segmented } from "../components/ui/Segmented";
+import { WalletCard } from "../components/ui/WalletCard";
 import { showToast } from "../components/Toast";
+import { APP_BRANDING } from "../config/app";
 import { ACCOUNT_PRESETS } from "../lib/catalog";
 import { formatCurrency, getWalletSummary } from "../lib/finance";
 import { useStore } from "../store/useStore";
@@ -27,11 +32,19 @@ const starterBalances: Record<string, number> = {
 
 function getDailyBars(values: number[]) {
   const max = Math.max(...values, 1);
-  return values.map((value, index) => ({
-    day: ["T", "W", "T", "F", "S", "S", "M"][index] ?? "D",
-    height: Math.max(18, Math.round((value / max) * 86)),
-    active: index === values.length - 1,
-  }));
+  return values.map((value, index) => {
+    const date = new Date();
+    date.setDate(date.getDate() - (values.length - 1 - index));
+    return {
+      day: date.toLocaleDateString(undefined, { weekday: "narrow" }),
+      height: Math.max(6, Math.round((value / max) * 72)),
+      active: index === values.length - 1,
+    };
+  });
+}
+
+function initialsFor(name: string, icon?: string) {
+  return (icon ?? name.slice(0, 2)).slice(0, 3).toUpperCase();
 }
 
 export default function Wallet() {
@@ -39,6 +52,8 @@ export default function Wallet() {
   const navigate = useNavigate();
   const wallet = getWalletSummary(store);
   const [tab, setTab] = useState<WalletTab>("all");
+  const [view, setView] = useState<"grid" | "list">("grid");
+  const [hidden, setHidden] = useState(false);
   const [isPickerOpen, setIsPickerOpen] = useState(false);
   const [selectedPresetKey, setSelectedPresetKey] = useState<string>(ACCOUNT_PRESETS[0].key);
   const [accountName, setAccountName] = useState("");
@@ -76,6 +91,11 @@ export default function Wallet() {
 
   const bars = getDailyBars(weekValues);
   const strongest = [...wallet.balances].sort((first, second) => second.balance - first.balance)[0];
+  const currency = store.settings.currencyCode;
+  const money = (amount: number, code: string = currency) =>
+    hidden ? "••••••" : formatCurrency(amount, code);
+  const assets = wallet.assets + wallet.receivables;
+  const liabilities = wallet.creditUsed + wallet.debts;
 
   const createAccount = () => {
     const name = accountName.trim() || selectedPreset.name;
@@ -106,178 +126,180 @@ export default function Wallet() {
   };
 
   return (
-    <section className="space-y-6">
+    <section className="space-y-4 md:space-y-5">
       <PageIntro
-        title="Accounts"
-        description="Manage your wallets and balances"
+        eyebrow={APP_BRANDING.shortName}
+        title="Wallet"
         action={
           <button
             type="button"
             onClick={() => setIsPickerOpen(true)}
-            className="hidden items-center gap-3 rounded-full bg-[#edf6ee] px-6 py-4 text-xl font-bold text-[#5e985d] shadow-[0_20px_50px_rgba(148,163,184,0.14)] sm:inline-flex"
+            className="flex h-12 w-12 items-center justify-center rounded-full bg-brand text-on-brand transition hover:brightness-110"
+            aria-label="Add account"
           >
             <PlusIcon className="h-6 w-6" />
-            Add Account
           </button>
         }
       />
 
-      <section className="overflow-hidden rounded-[2.25rem] bg-[#5d955d]">
-        <div className="flex flex-col gap-4 px-4 pt-4 md:flex-row md:items-end">
-          <Susi mood="think" />
-          <div className="flex-1 space-y-4 pb-4">
-            <div className="rounded-[2rem] bg-white/95 p-5 shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-400">
-                    Net worth
-                  </p>
-                  <p className="mt-2 text-[3rem] font-black tracking-[-0.06em] text-slate-900">
-                    {formatCurrency(wallet.netWorth, store.settings.currencyCode)}
-                  </p>
-                  <p className="mt-1 text-lg text-slate-400">Debit balances and investments</p>
-                </div>
-                <div className="rounded-[1.5rem] bg-slate-50 px-4 py-3 text-right">
-                  <p className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-400">
-                    Change
-                  </p>
-                  <p className="mt-1 text-xl font-black text-slate-400">0.0%</p>
-                </div>
-              </div>
+      <section className="bg-brand-gradient flex items-center gap-4 rounded-3xl p-5 md:p-6">
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/85">Net worth</p>
+            <button
+              type="button"
+              onClick={() => setHidden((value) => !value)}
+              className="-m-2 flex h-11 w-11 items-center justify-center rounded-full text-white/85 transition hover:bg-white/15"
+              aria-label={hidden ? "Show amounts" : "Hide amounts"}
+              aria-pressed={hidden}
+            >
+              {hidden ? <EyeSlashIcon className="h-5 w-5" /> : <EyeIcon className="h-5 w-5" />}
+            </button>
+          </div>
+          <p className="mt-1 truncate text-3xl font-extrabold tracking-tight md:text-4xl">
+            {money(wallet.netWorth)}
+          </p>
+          <div className="mt-4 grid grid-cols-2 gap-3">
+            <div className="rounded-2xl bg-white/15 px-4 py-3">
+              <p className="text-xs text-white/85">Assets</p>
+              <p className="truncate text-base font-bold">{money(assets)}</p>
             </div>
-
-            <div className="inline-flex rounded-[1.6rem] bg-transparent p-0.5">
-              {(["all", "debit", "credit"] as WalletTab[]).map((item) => (
-                <button
-                  key={item}
-                  type="button"
-                  onClick={() => setTab(item)}
-                  className={`min-w-[110px] rounded-[1.3rem] border px-6 py-3 text-lg font-bold capitalize transition ${
-                    tab === item
-                      ? "border-[#d7ead6] bg-[#5e985d] text-white"
-                      : "border-[#d7ead6] bg-white text-slate-500"
-                  }`}
-                >
-                  {item}
-                </button>
-              ))}
+            <div className="rounded-2xl bg-white/15 px-4 py-3">
+              <p className="text-xs text-white/85">Liabilities</p>
+              <p className="truncate text-base font-bold">{money(liabilities)}</p>
             </div>
           </div>
         </div>
+        <Susi mood="think" size={96} className="hidden sm:block" />
       </section>
 
-      <div className="grid gap-4 md:grid-cols-[1.2fr_0.8fr]">
-        <section className="rounded-[2rem] bg-white/92 p-5 shadow-[0_22px_60px_rgba(148,163,184,0.14)]">
-          <div className="flex items-center gap-4">
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#5e985d]">Insight</p>
-            <p className="text-xl font-bold text-slate-400">Forecast cashflow</p>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <Segmented
+          ariaLabel="Account type"
+          value={tab}
+          onChange={setTab}
+          options={[
+            { value: "all", label: "All" },
+            { value: "debit", label: "Debit" },
+            { value: "credit", label: "Credit" },
+          ]}
+        />
+        <Segmented
+          ariaLabel="Layout"
+          size="sm"
+          value={view}
+          onChange={setView}
+          options={[
+            { value: "grid", label: "Grid" },
+            { value: "list", label: "List" },
+          ]}
+        />
+      </div>
+
+      {!wallet.balances.length ? (
+        <EmptyState
+          title="Add your first wallet"
+          description="Track cash, bank, e-wallet, and credit accounts in one place."
+          actionLabel="Add account"
+          onAction={() => setIsPickerOpen(true)}
+          illustration={<Susi mood="think" size={96} />}
+        />
+      ) : view === "grid" ? (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {visibleAccounts.map((account) => {
+            const isCredit = account.classification === "credit" && Boolean(account.creditLimit);
+            const limit = account.creditLimit ?? 0;
+            return (
+              <WalletCard
+                key={account.id}
+                name={account.name}
+                initials={initialsFor(account.name, account.icon)}
+                color={account.color}
+                label={isCredit ? "Available credit" : "Balance"}
+                amount={money(isCredit ? limit - account.balance : account.balance, account.currencyCode ?? currency)}
+                usage={isCredit ? account.balance / limit : undefined}
+                onClick={() => navigate(`/wallet/${account.id}`)}
+              />
+            );
+          })}
+        </div>
+      ) : (
+        <Card>
+          <div className="divide-y divide-line">
+            {visibleAccounts.map((account) => (
+              <button
+                key={account.id}
+                type="button"
+                onClick={() => navigate(`/wallet/${account.id}`)}
+                className="flex min-h-[60px] w-full items-center gap-3 py-2 text-left"
+              >
+                <BrandMark
+                  label={initialsFor(account.name, account.icon)}
+                  color={account.color}
+                  textColor="#ffffff"
+                  size="sm"
+                />
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-sm font-semibold text-ink">{account.name}</span>
+                  <span className="block truncate text-xs text-muted">
+                    {account.details ?? `${account.classification} • ${account.currencyCode ?? currency}`}
+                  </span>
+                </span>
+                <span className="shrink-0 text-sm font-bold text-ink">
+                  {money(account.balance, account.currencyCode ?? currency)}
+                </span>
+              </button>
+            ))}
           </div>
-          <p className="mt-5 max-w-xl text-[1.05rem] leading-9 text-slate-500">
+        </Card>
+      )}
+
+      <div className="grid gap-4 md:grid-cols-[1.2fr_0.8fr]">
+        <Card>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-brand">Insight</p>
+          <p className="mt-1 text-base font-semibold text-ink">Forecast cashflow</p>
+          <p className="mt-2 max-w-xl text-sm leading-6 text-muted">
             {strongest
               ? `${strongest.name} is holding the line. Plenty compared to usual day-to-day chaos, so the goal now is protecting it.`
               : "Add a couple of accounts and this panel will start sounding like an actual wallet coach."}
           </p>
-        </section>
+        </Card>
 
-        <section className="rounded-[2rem] bg-white/92 p-5 shadow-[0_22px_60px_rgba(148,163,184,0.14)]">
-          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-400">
-            Daily balance
-          </p>
-          <div className="mt-8 flex h-32 items-end justify-between gap-3">
-            {bars.map((bar) => (
-              <div key={`${bar.day}-${bar.height}`} className="flex flex-1 flex-col items-center gap-3">
+        <Card>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">Daily activity</p>
+          <div className="mt-4 flex h-24 items-end justify-between gap-2">
+            {bars.map((bar, index) => (
+              <div key={index} className="flex flex-1 flex-col items-center gap-2">
                 <div
-                  className={`w-3 rounded-full ${bar.active ? "bg-[#5e985d]" : "bg-[#c9dec8]"}`}
+                  className={`w-2.5 rounded-full ${bar.active ? "bg-brand" : "bg-brand/30"}`}
                   style={{ height: `${bar.height}px` }}
                 />
-                <span className={`text-sm font-semibold ${bar.active ? "text-slate-900" : "text-slate-400"}`}>
+                <span className={`text-xs font-semibold ${bar.active ? "text-ink" : "text-muted"}`}>
                   {bar.day}
                 </span>
               </div>
             ))}
           </div>
-        </section>
+        </Card>
       </div>
-
-      <p className="text-lg text-slate-400">Press and hold an account card to rearrange it.</p>
-
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        {visibleAccounts.map((account) => (
-          <button
-            key={account.id}
-            type="button"
-            onClick={() => navigate(`/wallet/${account.id}`)}
-            className="relative overflow-hidden rounded-[2rem] p-5 text-left text-white shadow-[0_28px_60px_rgba(15,23,42,0.12)] transition hover:-translate-y-0.5"
-            style={{ background: `linear-gradient(145deg, ${account.color}, ${account.color}dd)` }}
-          >
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex items-center gap-4">
-                <BrandMark
-                  label={account.icon ?? account.name.slice(0, 2).toUpperCase()}
-                  color="rgba(255,255,255,0.18)"
-                  textColor="#ffffff"
-                  size="md"
-                />
-                <div>
-                  <p className="text-[1.1rem] font-bold">{account.name}</p>
-                  <p className="mt-2 text-lg text-white/75">{account.details ?? `${account.classification} • ${account.currencyCode ?? store.settings.currencyCode}`}</p>
-                </div>
-              </div>
-              <EllipsisHorizontalIcon className="h-6 w-6 text-white/75" />
-            </div>
-
-            {account.classification === "credit" && account.creditLimit ? (
-              <div className="mt-10">
-                <div className="h-3 rounded-full bg-white/35">
-                  <div
-                    className="h-3 rounded-full bg-[#5d955d]"
-                    style={{ width: `${Math.min(100, Math.round((account.balance / account.creditLimit) * 100))}%` }}
-                  />
-                </div>
-                <div className="mt-2 flex items-center justify-between text-lg text-white/80">
-                  <span>{Math.round((account.balance / account.creditLimit) * 100)}% used</span>
-                  <span>{formatCurrency(account.creditLimit - account.balance, account.currencyCode ?? store.settings.currencyCode)} left</span>
-                </div>
-              </div>
-            ) : null}
-
-            <div className="mt-12">
-              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-white/80">Balance</p>
-              <p className="mt-2 text-[2.3rem] font-black tracking-[-0.05em]">
-                {formatCurrency(account.balance, account.currencyCode ?? store.settings.currencyCode)}
-              </p>
-              {account.unitsLabel ? <p className="mt-2 text-lg text-white/75">{account.unitsLabel}</p> : null}
-            </div>
-          </button>
-        ))}
-      </div>
-
-      <button
-        type="button"
-        onClick={() => setIsPickerOpen(true)}
-        className="inline-flex items-center gap-3 rounded-full bg-[#edf6ee] px-6 py-4 text-lg font-bold text-[#5e985d] shadow-[0_20px_50px_rgba(148,163,184,0.14)] sm:hidden"
-      >
-        <PlusIcon className="h-6 w-6" />
-        Add Account
-      </button>
 
       <PickerSheet
         title="Choose an account"
         open={isPickerOpen}
         onClose={() => setIsPickerOpen(false)}
         footer={
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-3">
             <button
               type="button"
               onClick={() => setIsPickerOpen(false)}
-              className="rounded-[1.6rem] border border-slate-200 bg-white px-4 py-4 text-lg font-bold text-slate-400"
+              className="min-h-[48px] rounded-2xl border border-line bg-raised px-4 text-sm font-bold text-muted"
             >
               Cancel
             </button>
             <button
               type="button"
               onClick={createAccount}
-              className="rounded-[1.6rem] bg-[#5e985d] px-4 py-4 text-lg font-bold text-white"
+              className="min-h-[48px] rounded-2xl bg-brand px-4 text-sm font-bold text-on-brand"
             >
               Save
             </button>
@@ -295,40 +317,38 @@ export default function Wallet() {
                   setAccountName(preset.name);
                   setOpeningBalance(String(starterBalances[preset.key] ?? 0));
                 }}
-                className={`rounded-[1.7rem] border px-3 py-5 text-center transition ${
-                  selectedPresetKey === preset.key
-                    ? "border-[#5e985d] bg-[#f3faf3]"
-                    : "border-slate-200 bg-white"
+                className={`rounded-2xl border px-2 py-4 text-center transition ${
+                  selectedPresetKey === preset.key ? "border-brand bg-brand/10" : "border-line bg-raised"
                 }`}
               >
                 <div className="mx-auto w-fit">
                   <BrandMark label={preset.icon} color={preset.color} textColor="#ffffff" size="md" />
                 </div>
-                <p className="mt-4 text-xl font-bold text-slate-900">{preset.name}</p>
+                <p className="mt-3 truncate text-sm font-semibold text-ink">{preset.name}</p>
               </button>
             ))}
           </div>
 
           <div className="space-y-3">
             <label className="block">
-              <span className="mb-2 block text-sm font-semibold uppercase tracking-[0.18em] text-slate-400">
+              <span className="mb-2 block text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">
                 Account name
               </span>
               <input
                 value={accountName}
                 onChange={(event) => setAccountName(event.target.value)}
-                className="w-full rounded-[1.4rem] border border-slate-200 bg-slate-50 px-4 py-4 text-lg text-slate-900 outline-none focus:border-[#5e985d]"
+                className="min-h-[48px] w-full rounded-2xl border border-line bg-raised px-4 text-base text-ink outline-none focus:border-brand"
               />
             </label>
             <label className="block">
-              <span className="mb-2 block text-sm font-semibold uppercase tracking-[0.18em] text-slate-400">
+              <span className="mb-2 block text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">
                 Opening balance
               </span>
               <input
                 value={openingBalance}
                 onChange={(event) => setOpeningBalance(event.target.value)}
                 inputMode="decimal"
-                className="w-full rounded-[1.4rem] border border-slate-200 bg-slate-50 px-4 py-4 text-lg text-slate-900 outline-none focus:border-[#5e985d]"
+                className="min-h-[48px] w-full rounded-2xl border border-line bg-raised px-4 text-base text-ink outline-none focus:border-brand"
               />
             </label>
           </div>
