@@ -208,7 +208,7 @@ export default function Dashboard() {
           </svg>
         </section>
 
-        <div className="-mx-4 flex gap-3 overflow-x-auto px-4 pb-1 md:contents">
+        <div className="-mx-4 flex gap-3 overflow-x-auto px-4 pb-1 [scrollbar-width:none] md:contents">
           {[
             {
               label: "Days until payday",
@@ -247,7 +247,8 @@ export default function Dashboard() {
         >
           {stackAccounts.length ? (
             <>
-              <div className="relative h-[190px] sm:h-[200px]">
+              <div className="relative pb-[14px]">
+                <div className="invisible aspect-[1.586] w-[72%] sm:w-[62%]" aria-hidden="true" />
                 {stackAccounts
                   .map((account, index) => ({ account, index }))
                   .reverse()
