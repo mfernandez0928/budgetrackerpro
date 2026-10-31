@@ -51,7 +51,7 @@ export function SavingsGoalsPanel() {
             value={form.name}
             onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
             placeholder="Emergency fund, travel, laptop"
-            className="rounded-2xl border border-line bg-raised px-4 py-3 text-sm text-ink outline-none placeholder:text-muted focus:border-teal-400"
+            className="rounded-2xl border border-line bg-raised px-4 py-3 text-sm text-ink outline-none placeholder:text-muted focus:border-brand"
           />
           <input
             inputMode="decimal"
@@ -60,7 +60,7 @@ export function SavingsGoalsPanel() {
               setForm((current) => ({ ...current, targetAmount: event.target.value }))
             }
             placeholder="Target amount"
-            className="rounded-2xl border border-line bg-raised px-4 py-3 text-sm text-ink outline-none placeholder:text-muted focus:border-teal-400"
+            className="rounded-2xl border border-line bg-raised px-4 py-3 text-sm text-ink outline-none placeholder:text-muted focus:border-brand"
           />
           <input
             inputMode="decimal"
@@ -69,7 +69,7 @@ export function SavingsGoalsPanel() {
               setForm((current) => ({ ...current, currentAmount: event.target.value }))
             }
             placeholder="Current saved"
-            className="rounded-2xl border border-line bg-raised px-4 py-3 text-sm text-ink outline-none placeholder:text-muted focus:border-teal-400"
+            className="rounded-2xl border border-line bg-raised px-4 py-3 text-sm text-ink outline-none placeholder:text-muted focus:border-brand"
           />
           <input
             type="month"
@@ -77,7 +77,7 @@ export function SavingsGoalsPanel() {
             onChange={(event) =>
               setForm((current) => ({ ...current, targetMonth: event.target.value }))
             }
-            className="rounded-2xl border border-line bg-raised px-4 py-3 text-sm text-ink outline-none focus:border-teal-400"
+            className="rounded-2xl border border-line bg-raised px-4 py-3 text-sm text-ink outline-none focus:border-brand"
           />
           <button
             type="submit"
@@ -92,7 +92,7 @@ export function SavingsGoalsPanel() {
         {goalProgress.map((goal) => (
           <article
             key={goal.id}
-            className="rounded-3xl border border-line bg-surface/[0.04] p-5"
+            className="rounded-3xl border border-line bg-raised p-4"
           >
             <div className="flex items-start justify-between gap-4">
               <div>
@@ -141,7 +141,7 @@ export function SavingsGoalsPanel() {
                   deleteSavingsGoal(goal.id);
                   showToast("Goal removed.", "success");
                 }}
-                className="inline-flex items-center gap-2 rounded-full border border-neg/30 bg-neg/10 px-3 py-2 text-xs font-semibold text-rose-200 transition hover:bg-neg/20"
+                className="inline-flex items-center gap-2 rounded-full border border-neg/30 bg-neg/10 px-3 py-2 text-xs font-semibold text-neg transition hover:bg-neg/20"
               >
                 <TrashIcon className="h-4 w-4" />
                 Delete

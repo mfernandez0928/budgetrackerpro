@@ -35,12 +35,12 @@ const planCards: Array<{
   color: string;
   description: string;
 }> = [
-  { id: "budgets", title: "Category budgets", icon: ChartPieIcon, color: "#5e985d", description: "Give each category a spending lane." },
-  { id: "goals", title: "Personal goals", icon: FlagIcon, color: "#5e985d", description: "Save toward what matters on purpose." },
+  { id: "budgets", title: "Category budgets", icon: ChartPieIcon, color: "rgb(var(--brand))", description: "Give each category a spending lane." },
+  { id: "goals", title: "Personal goals", icon: FlagIcon, color: "rgb(var(--brand))", description: "Save toward what matters on purpose." },
   { id: "debt", title: "Debt", icon: CreditCardIcon, color: "#eab308", description: "Keep balances and minimums visible." },
-  { id: "owed", title: "Money owed to you", icon: BanknotesIcon, color: "#5e985d", description: "Track receivables and reimbursements." },
-  { id: "payments", title: "Planned payments", icon: CalendarDaysIcon, color: "#5e985d", description: "See recurring and one-time due items." },
-  { id: "installments", title: "Installments", icon: CreditCardIcon, color: "#5e985d", description: "Keep split purchases from surprising you." },
+  { id: "owed", title: "Money owed to you", icon: BanknotesIcon, color: "rgb(var(--brand))", description: "Track receivables and reimbursements." },
+  { id: "payments", title: "Planned payments", icon: CalendarDaysIcon, color: "rgb(var(--brand))", description: "See recurring and one-time due items." },
+  { id: "installments", title: "Installments", icon: CreditCardIcon, color: "rgb(var(--brand))", description: "Keep split purchases from surprising you." },
 ];
 
 export default function Plan() {

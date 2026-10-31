@@ -70,21 +70,21 @@ export function RecurringBillsPanel() {
           value={form.title}
           onChange={(event) => setForm((current) => ({ ...current, title: event.target.value }))}
           placeholder="Rent, internet, gym"
-          className="rounded-2xl border border-line bg-raised px-4 py-3 text-sm text-ink outline-none placeholder:text-muted focus:border-teal-400"
+          className="rounded-2xl border border-line bg-raised px-4 py-3 text-sm text-ink outline-none placeholder:text-muted focus:border-brand"
         />
         <input
           inputMode="decimal"
           value={form.amount}
           onChange={(event) => setForm((current) => ({ ...current, amount: event.target.value }))}
           placeholder="Amount"
-          className="rounded-2xl border border-line bg-raised px-4 py-3 text-sm text-ink outline-none placeholder:text-muted focus:border-teal-400"
+          className="rounded-2xl border border-line bg-raised px-4 py-3 text-sm text-ink outline-none placeholder:text-muted focus:border-brand"
         />
         <select
           value={form.categoryId}
           onChange={(event) =>
             setForm((current) => ({ ...current, categoryId: event.target.value }))
           }
-          className="rounded-2xl border border-line bg-raised px-4 py-3 text-sm text-ink outline-none focus:border-teal-400"
+          className="rounded-2xl border border-line bg-raised px-4 py-3 text-sm text-ink outline-none focus:border-brand"
         >
           {expenseCategories.map((category) => (
             <option key={category.id} value={category.id}>
@@ -97,7 +97,7 @@ export function RecurringBillsPanel() {
           onChange={(event) =>
             setForm((current) => ({ ...current, accountId: event.target.value }))
           }
-          className="rounded-2xl border border-line bg-raised px-4 py-3 text-sm text-ink outline-none focus:border-teal-400"
+          className="rounded-2xl border border-line bg-raised px-4 py-3 text-sm text-ink outline-none focus:border-brand"
         >
           {accounts.map((account) => (
             <option key={account.id} value={account.id}>
@@ -111,7 +111,7 @@ export function RecurringBillsPanel() {
           onChange={(event) =>
             setForm((current) => ({ ...current, nextDueDate: event.target.value }))
           }
-          className="rounded-2xl border border-line bg-raised px-4 py-3 text-sm text-ink outline-none focus:border-teal-400"
+          className="rounded-2xl border border-line bg-raised px-4 py-3 text-sm text-ink outline-none focus:border-brand"
         />
       </form>
 
@@ -154,7 +154,7 @@ export function RecurringBillsPanel() {
                   deleteRecurringBill(bill.id);
                   showToast("Recurring bill deleted.", "success");
                 }}
-                className="inline-flex items-center gap-2 rounded-full border border-neg/30 bg-neg/10 px-3 py-2 text-xs font-semibold text-rose-200 transition hover:bg-neg/20"
+                className="inline-flex items-center gap-2 rounded-full border border-neg/30 bg-neg/10 px-3 py-2 text-xs font-semibold text-neg transition hover:bg-neg/20"
               >
                 <TrashIcon className="h-4 w-4" />
                 Delete

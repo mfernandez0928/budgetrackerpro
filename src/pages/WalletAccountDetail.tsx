@@ -87,7 +87,7 @@ export default function WalletAccountDetail() {
               flow.bars.map((bar, index) => (
                 <div key={`${bar.kind}-${index}`} className="flex flex-1 flex-col items-center gap-3">
                   <div
-                    className={`w-3 rounded-full ${bar.kind === "in" ? "bg-brand" : "bg-rose-400"}`}
+                    className={`w-3 rounded-full ${bar.kind === "in" ? "bg-brand" : "bg-neg"}`}
                     style={{ height: `${bar.height}px` }}
                   />
                   <span className="text-sm font-semibold text-muted">

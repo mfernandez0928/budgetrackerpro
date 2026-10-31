@@ -30,7 +30,7 @@ export function BudgetPlanner() {
       {recommendations.length ? (
         <div className="mb-4 rounded-3xl border border-warn/30 bg-warn/10 p-4">
           <p className="text-sm font-semibold text-warn">Budget suggestion</p>
-          <p className="mt-1 text-sm text-amber-50">
+          <p className="mt-1 text-sm text-ink">
             You have spending in {recommendations.map((item) => item.name).join(", ")} without
             a monthly budget. Start there for the biggest behavior lift.
           </p>
@@ -78,7 +78,7 @@ export function BudgetPlanner() {
                       }))
                     }
                     placeholder="Set monthly limit"
-                    className="rounded-full border border-line bg-raised px-4 py-2.5 text-sm text-ink outline-none placeholder:text-muted focus:border-teal-400"
+                    className="rounded-full border border-line bg-raised px-4 py-2.5 text-sm text-ink outline-none placeholder:text-muted focus:border-brand"
                   />
                   <button
                     type="button"
