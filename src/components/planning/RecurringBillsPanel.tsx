@@ -3,6 +3,7 @@ import { BellAlertIcon, CheckCircleIcon, TrashIcon } from "@heroicons/react/24/o
 import { useStore } from "../../store/useStore";
 import { formatCurrency, getUpcomingBills } from "../../lib/finance";
 import { getTodayISO } from "../../lib/date";
+import { EmptyState } from "../ui/EmptyState";
 import { SectionHeader } from "../ui/SectionHeader";
 import { showToast } from "../Toast";
 
@@ -161,6 +162,12 @@ export function RecurringBillsPanel() {
             </div>
           </article>
         ))}
+        {!upcomingBills.length ? (
+          <EmptyState
+            title="No upcoming recurring bills"
+            description="Add your rent, utilities, subscriptions, or salary cadence so the app can warn you before due dates."
+          />
+        ) : null}
       </div>
     </section>
   );

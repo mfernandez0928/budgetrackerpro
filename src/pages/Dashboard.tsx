@@ -1,267 +1,343 @@
-import { BoltIcon, CreditCardIcon, SparklesIcon, WalletIcon } from "@heroicons/react/24/outline";
+import { ArrowTrendingUpIcon, CalendarDaysIcon } from "@heroicons/react/24/outline";
+import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
+import { BudgetBuddy } from "../components/illustrations/BudgetBuddy";
+import { BrandMark } from "../components/ui/BrandMark";
+import { EmptyState } from "../components/ui/EmptyState";
 import { useStore } from "../store/useStore";
 import {
   formatCurrency,
-  getAccountBalances,
   getGoalProgress,
   getMonthlyInsightSummary,
   getMonthlySummary,
-  getRecentTransactions,
-  getUpcomingBills,
+  getUpcomingPayments,
 } from "../lib/finance";
-import { StatCard } from "../components/ui/StatCard";
-import { ProgressBar } from "../components/ui/ProgressBar";
-import { EmptyState } from "../components/ui/EmptyState";
+import { daysUntil, getTodayISO } from "../lib/date";
+
+function formatHeaderDate() {
+  return new Intl.DateTimeFormat(undefined, {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+  })
+    .format(new Date())
+    .toUpperCase();
+}
+
+function getGreeting() {
+  const hour = new Date().getHours();
+  if (hour < 12) return "Good morning";
+  if (hour < 18) return "Good afternoon";
+  return "Good evening";
+}
+
+function getCoachLine(lines: string[]) {
+  return (
+    lines[0] ??
+    "You are still shaping the month, so a couple of planned moves now will make the dashboard sharper fast."
+  );
+}
+
+function getWeekBars(values: number[]) {
+  const max = Math.max(...values, 1);
+  return values.map((value, index) => ({
+    day: ["T", "W", "T", "F", "S", "S", "M"][index] ?? "D",
+    height: Math.max(10, Math.round((value / max) * 84)),
+    active: index === values.length - 1,
+  }));
+}
 
 export default function Dashboard() {
   const store = useStore();
   const navigate = useNavigate();
-  const summary = getMonthlySummary(store);
-  const insight = getMonthlyInsightSummary(store);
-  const accountBalances = getAccountBalances(store);
-  const recentTransactions = getRecentTransactions(store.transactions, 5);
-  const upcomingBills = getUpcomingBills(store.recurringBills, 7);
-  const goals = getGoalProgress(store.savingsGoals).slice(0, 3);
+  const monthly = getMonthlySummary(store);
+  const monthlyInsights = getMonthlyInsightSummary(store);
+  const goals = getGoalProgress(store.savingsGoals);
+  const upcoming = getUpcomingPayments(store, 30).slice(0, 4);
+  const profileName = store.profile.hasCompletedOnboarding ? "Bryl" : "there";
 
-  if (!store.profile.hasCompletedOnboarding && store.transactions.length === 0) {
-    return (
-      <section className="space-y-6">
-        <div className="rounded-[2rem] border border-teal-400/20 bg-[radial-gradient(circle_at_top_left,_rgba(20,184,166,0.18),_rgba(15,23,42,0.92)_55%)] p-6">
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-teal-200/80">
-            Start strong
-          </p>
-          <h2 className="mt-2 text-3xl font-semibold text-white">
-            Build the habit, not just the ledger
-          </h2>
-          <p className="mt-3 max-w-2xl text-sm text-slate-300">
-            Set up the basics and your dashboard becomes immediately useful, not just decorative.
-          </p>
-          <div className="mt-6 grid gap-3 md:grid-cols-3">
-            <button
-              type="button"
-              onClick={() => navigate("/transactions")}
-              className="rounded-3xl border border-white/10 bg-white/5 p-4 text-left transition hover:bg-white/10"
-            >
-              <CreditCardIcon className="h-8 w-8 text-teal-300" />
-              <p className="mt-3 text-base font-semibold text-white">Add your first transaction</p>
-            </button>
-            <button
-              type="button"
-              onClick={() => navigate("/planning")}
-              className="rounded-3xl border border-white/10 bg-white/5 p-4 text-left transition hover:bg-white/10"
-            >
-              <BoltIcon className="h-8 w-8 text-amber-300" />
-              <p className="mt-3 text-base font-semibold text-white">Set category budgets</p>
-            </button>
-            <button
-              type="button"
-              onClick={() => navigate("/goals")}
-              className="rounded-3xl border border-white/10 bg-white/5 p-4 text-left transition hover:bg-white/10"
-            >
-              <SparklesIcon className="h-8 w-8 text-sky-300" />
-              <p className="mt-3 text-base font-semibold text-white">Create a savings goal</p>
-            </button>
-          </div>
-          <button
-            type="button"
-            onClick={() => store.completeOnboarding()}
-            className="mt-6 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/10"
-          >
-            Dismiss onboarding
-          </button>
-        </div>
-      </section>
+  const dayValues = useMemo(() => {
+    const dates = Array.from({ length: 7 }, (_, index) => {
+      const date = new Date();
+      date.setDate(date.getDate() - (6 - index));
+      return date.toISOString().split("T")[0];
+    });
+
+    return dates.map((date) =>
+      store.transactions
+        .filter((transaction) => transaction.date === date && transaction.type === "expense")
+        .reduce((sum, transaction) => sum + transaction.amount, 0)
     );
-  }
+  }, [store.transactions]);
+
+  const todayTotal = useMemo(
+    () =>
+      store.transactions
+        .filter((transaction) => transaction.date === getTodayISO())
+        .reduce(
+          (sum, transaction) =>
+            sum +
+            (transaction.type === "income"
+              ? transaction.amount
+              : transaction.type === "expense"
+              ? -transaction.amount
+              : 0),
+          0
+        ),
+    [store.transactions]
+  );
+
+  const nextPayday = useMemo(() => {
+    const candidates = [
+      ...store.recurringBills
+        .filter((bill) => bill.type === "income" && bill.isActive)
+        .map((bill) => ({ title: bill.title, amount: bill.amount, date: bill.nextDueDate })),
+      ...store.plannedPayments
+        .filter((payment) => payment.status !== "paid")
+        .map((payment) => ({ title: payment.title, amount: payment.amount, date: payment.dueDate })),
+    ]
+      .filter((item) => new Date(item.date).getTime() >= new Date(getTodayISO()).getTime())
+      .sort((first, second) => new Date(first.date).getTime() - new Date(second.date).getTime());
+
+    return candidates[0];
+  }, [store.plannedPayments, store.recurringBills]);
+
+  const groupedUpcoming = {
+    income: upcoming.filter((item) => {
+      const recurring = store.recurringBills.find((bill) => bill.id === item.id);
+      return recurring?.type === "income";
+    }),
+    expenses: upcoming.filter((item) => {
+      const recurring = store.recurringBills.find((bill) => bill.id === item.id);
+      return recurring?.type !== "income";
+    }),
+  };
+
+  const weekBars = getWeekBars(dayValues);
 
   return (
     <section className="space-y-6">
-      <div className="rounded-[2rem] border border-white/10 bg-[radial-gradient(circle_at_top_left,_rgba(20,184,166,0.18),_rgba(15,23,42,0.96)_60%)] p-6">
-        <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-          <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-teal-200/80">
-              This month
-            </p>
-            <h2 className="mt-2 text-4xl font-semibold text-white">
-              {formatCurrency(summary.balance, store.settings.currencyCode)}
-            </h2>
-            <p className="mt-2 max-w-xl text-sm text-slate-300">
-              {summary.budgetHealth === "healthy"
-                ? "You are spending within plan and building healthy buffer."
-                : summary.budgetHealth === "watch"
-                ? "Budget pressure is rising. Check bills and flexible categories."
-                : summary.budgetHealth === "over"
-                ? "You are past your planned budget. Cut a category or rebalance this week."
-                : "Set category budgets to turn this from tracking into active planning."}
-            </p>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <StatCard
-              label="Income"
-              value={formatCurrency(summary.income, store.settings.currencyCode)}
-              hint="Money coming in this month"
-              tone="good"
-            />
-            <StatCard
-              label="Expenses"
-              value={formatCurrency(summary.expenses, store.settings.currencyCode)}
-              hint="Money going out this month"
-              tone={summary.expenses > summary.income ? "danger" : "warn"}
-            />
-          </div>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-400">
+            {formatHeaderDate()}
+          </p>
+          <h1 className="mt-2 text-[2.75rem] font-black leading-none tracking-[-0.05em] text-slate-900">
+            {getGreeting()}, {profileName}!
+          </h1>
+        </div>
+        <div className="hidden gap-3 sm:flex">
+          <button
+            type="button"
+            onClick={() => navigate("/transactions")}
+            className="flex h-14 w-14 items-center justify-center rounded-[1.5rem] bg-white/80 text-[#5e985d] shadow-[0_18px_40px_rgba(148,163,184,0.15)]"
+          >
+            <CalendarDaysIcon className="h-6 w-6" />
+          </button>
+          <button
+            type="button"
+            onClick={() => navigate("/settings")}
+            className="flex h-14 w-14 items-center justify-center rounded-[1.5rem] bg-white/80 text-[#5e985d] shadow-[0_18px_40px_rgba(148,163,184,0.15)]"
+          >
+            <ArrowTrendingUpIcon className="h-6 w-6" />
+          </button>
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <StatCard
-          label="Budget status"
-          value={
-            summary.planned
-              ? `${Math.round((summary.spentAgainstBudget / summary.planned) * 100)}% used`
-              : "Not set"
-          }
-          hint={
-            summary.planned
-              ? `${formatCurrency(
-                  summary.spentAgainstBudget,
-                  store.settings.currencyCode
-                )} spent of ${formatCurrency(summary.planned, store.settings.currencyCode)}`
-              : "Set category budgets in Planning"
-          }
-          tone={
-            summary.budgetHealth === "over"
-              ? "danger"
-              : summary.budgetHealth === "watch"
-              ? "warn"
-              : "default"
-          }
-        />
-        <StatCard
-          label="Savings rate"
-          value={`${Math.round(summary.savingsRate)}%`}
-          hint="Income left after expenses"
-          tone={summary.savingsRate >= 20 ? "good" : "default"}
-        />
-        <StatCard
-          label="Upcoming bills"
-          value={String(upcomingBills.length)}
-          hint="Due in the next 7 days"
-          tone={upcomingBills.length ? "warn" : "default"}
-        />
-        <StatCard
-          label="Top category"
-          value={insight.topCategory?.name ?? "No data"}
-          hint={
-            insight.topCategory
-              ? formatCurrency(insight.topCategory.amount, store.settings.currencyCode)
-              : "Add expenses to see insights"
-          }
-        />
-      </div>
-
-      <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
-        <section className="rounded-[2rem] border border-white/10 bg-white/5 p-5">
-          <div className="flex items-center justify-between gap-4">
-            <div>
-              <p className="text-lg font-semibold text-white">Recent transactions</p>
-              <p className="text-sm text-slate-400">
-                Your latest activity across all accounts and categories.
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={() => navigate("/transactions")}
-              className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/10"
-            >
-              View all
-            </button>
+      <section className="overflow-hidden rounded-[2.25rem] bg-[#5d955d]">
+        <div className="flex items-end gap-2 px-4 pt-4">
+          <BudgetBuddy mood="wave" />
+          <div className="mb-5 flex-1 rounded-[2rem] bg-white/95 p-5 shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
+            <p className="text-2xl font-black tracking-[-0.04em] text-[#4f8b4f]">Tarsi</p>
+            <p className="mt-2 text-lg leading-8 text-slate-500">
+              {getCoachLine(monthlyInsights.insights)}
+            </p>
           </div>
-          <div className="mt-4 space-y-3">
-            {recentTransactions.map((transaction) => (
-              <div
-                key={transaction.id}
-                className="flex items-center justify-between rounded-3xl border border-white/10 bg-slate-950/60 px-4 py-3"
-              >
-                <div>
-                  <p className="font-semibold text-white">{transaction.title}</p>
-                  <p className="text-sm text-slate-400">{transaction.date}</p>
-                </div>
-                <p
-                  className={`text-sm font-semibold ${
-                    transaction.type === "income"
-                      ? "text-emerald-300"
-                      : transaction.type === "expense"
-                      ? "text-rose-300"
-                      : "text-sky-300"
-                  }`}
-                >
-                  {transaction.type === "income" ? "+" : transaction.type === "expense" ? "-" : ""}
-                  {formatCurrency(transaction.amount, store.settings.currencyCode)}
-                </p>
+        </div>
+      </section>
+
+      <div className="grid gap-4 md:grid-cols-2">
+        <section className="rounded-[2rem] bg-white/92 p-5 shadow-[0_22px_60px_rgba(148,163,184,0.14)]">
+          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-400">
+            Last 7 days
+          </p>
+          <div className="mt-8 flex h-32 items-end justify-between gap-3">
+            {weekBars.map((bar) => (
+              <div key={`${bar.day}-${bar.height}`} className="flex flex-1 flex-col items-center gap-3">
+                <div
+                  className={`w-3 rounded-full ${bar.active ? "bg-[#5e985d]" : "bg-[#c9dec8]"}`}
+                  style={{ height: `${bar.height}px` }}
+                />
+                <span className={`text-sm font-semibold ${bar.active ? "text-slate-900" : "text-slate-400"}`}>
+                  {bar.day}
+                </span>
               </div>
             ))}
-            {!recentTransactions.length ? (
-              <EmptyState
-                title="No transactions yet"
-                description="Add your first income or expense to activate the dashboard."
-                actionLabel="Add transaction"
-                onAction={() => navigate("/transactions")}
-              />
-            ) : null}
           </div>
         </section>
 
-        <div className="space-y-6">
-          <section className="rounded-[2rem] border border-white/10 bg-white/5 p-5">
-            <div className="flex items-center gap-2">
-              <WalletIcon className="h-5 w-5 text-teal-300" />
-              <p className="text-lg font-semibold text-white">Wallet balances</p>
-            </div>
-            <div className="mt-4 space-y-3">
-              {accountBalances.map((account) => (
-                <div
-                  key={account.id}
-                  className="rounded-3xl border border-white/10 bg-slate-950/60 px-4 py-3"
-                >
-                  <div className="flex items-center justify-between gap-4">
-                    <div>
-                      <p className="font-semibold text-white">{account.name}</p>
-                      <p className="text-sm capitalize text-slate-400">{account.type}</p>
-                    </div>
-                    <p className="text-sm font-semibold text-white">
-                      {formatCurrency(account.balance, store.settings.currencyCode)}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
+        <section className="rounded-[2rem] bg-white/92 p-5 shadow-[0_22px_60px_rgba(148,163,184,0.14)]">
+          <p className="text-[2rem] font-black tracking-[-0.05em] text-slate-900">Today</p>
+          <p className={`mt-10 text-[2.2rem] font-black tracking-[-0.05em] ${todayTotal >= 0 ? "text-slate-900" : "text-rose-500"}`}>
+            {formatCurrency(todayTotal, store.settings.currencyCode)}
+          </p>
+          <div className="mt-8 inline-flex rounded-full bg-slate-50 p-1">
+            {["Day", "Week", "Month"].map((item, index) => (
+              <button
+                key={item}
+                type="button"
+                className={`rounded-full px-5 py-2.5 text-sm font-semibold transition ${
+                  index === 0 ? "bg-[#5e985d] text-white" : "text-slate-400"
+                }`}
+              >
+                {item}
+              </button>
+            ))}
+          </div>
+        </section>
+      </div>
 
-          <section className="rounded-[2rem] border border-white/10 bg-white/5 p-5">
-            <p className="text-lg font-semibold text-white">Savings momentum</p>
-            <div className="mt-4 space-y-4">
-              {goals.map((goal) => (
-                <div key={goal.id} className="rounded-3xl border border-white/10 bg-slate-950/60 p-4">
-                  <div className="flex items-center justify-between gap-4">
-                    <div>
-                      <p className="font-semibold text-white">{goal.name}</p>
-                      <p className="text-sm text-slate-400">
-                        {formatCurrency(goal.currentAmount, store.settings.currencyCode)} saved
+      <section className="rounded-[2rem] bg-[linear-gradient(90deg,rgba(232,245,235,0.95),rgba(255,255,255,0.88))] p-5 shadow-[0_22px_60px_rgba(148,163,184,0.14)]">
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div className="flex h-16 w-16 items-center justify-center rounded-[1.5rem] bg-[#e8f3e8] text-[#5e985d]">
+              <ArrowTrendingUpIcon className="h-7 w-7" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#5e985d]">
+                Days until payday
+              </p>
+              <p className="mt-1 text-[2.2rem] font-black tracking-[-0.05em] text-slate-900">
+                {nextPayday ? `${Math.max(0, daysUntil(nextPayday.date))} days` : "Plan one"}
+              </p>
+            </div>
+          </div>
+          <div className="text-right">
+            <p className="text-[2rem] font-black tracking-[-0.04em] text-[#5e985d]">
+              {nextPayday ? formatCurrency(nextPayday.amount, store.settings.currencyCode) : "--"}
+            </p>
+            <p className="mt-1 text-xl text-slate-400">
+              {nextPayday ? new Date(nextPayday.date).toLocaleDateString(undefined, { month: "short", day: "numeric" }) : "No income planned"}
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section className="rounded-[2rem] bg-white/92 p-5 shadow-[0_22px_60px_rgba(148,163,184,0.14)]">
+        <div className="flex items-start gap-4">
+          <div className="flex h-16 w-16 items-center justify-center rounded-[1.5rem] bg-[#edf6ee] text-[#5e985d]">
+            <CalendarDaysIcon className="h-7 w-7" />
+          </div>
+          <div>
+            <p className="text-[2rem] font-black tracking-[-0.05em] text-slate-900">Upcoming</p>
+            <p className="mt-1 text-lg text-slate-400">Planned and recurring money moves</p>
+          </div>
+        </div>
+
+        {upcoming.length ? (
+          <div className="mt-8 space-y-6">
+            <div>
+              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#5e985d]">
+                Income
+              </p>
+              <div className="mt-4 space-y-3">
+                {groupedUpcoming.income.length ? (
+                  groupedUpcoming.income.map((item) => (
+                    <div key={`${item.source}-${item.id}`} className="flex items-center justify-between gap-4">
+                      <div className="flex items-center gap-4">
+                        <BrandMark label="IN" color="#7cf24b" size="md" />
+                        <div>
+                          <p className="text-[1.05rem] font-bold text-slate-900">{item.title}</p>
+                          <p className="text-lg text-slate-400">
+                            {new Date(item.dueDate).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
+                          </p>
+                        </div>
+                      </div>
+                      <p className="text-[1.2rem] font-black text-[#5e985d]">
+                        {formatCurrency(item.amount, store.settings.currencyCode)}
                       </p>
                     </div>
-                    <p className="text-sm text-slate-300">
-                      {Math.round(goal.progress * 100)}%
-                    </p>
-                  </div>
-                  <div className="mt-3">
-                    <ProgressBar value={goal.progress} />
-                  </div>
-                </div>
-              ))}
+                  ))
+                ) : (
+                  <p className="rounded-[1.5rem] bg-slate-50 px-4 py-4 text-sm text-slate-500">
+                    No income scheduled yet. Add one from History or Plan.
+                  </p>
+                )}
+              </div>
             </div>
-          </section>
-        </div>
+
+            <div>
+              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-rose-400">
+                Expenses
+              </p>
+              <div className="mt-4 space-y-3">
+                {groupedUpcoming.expenses.map((item, index) => (
+                  <div
+                    key={`${item.source}-${item.id}`}
+                    className={`flex items-center justify-between gap-4 rounded-[1.7rem] px-3 py-3 ${
+                      index === 0 ? "bg-rose-50" : ""
+                    }`}
+                  >
+                    <div className="flex items-center gap-4">
+                      <BrandMark
+                        label={item.title.slice(0, 2).toUpperCase()}
+                        color={index === 0 ? "#111111" : "#eef2f7"}
+                        textColor={index === 0 ? "#ef4444" : "#475569"}
+                        size="md"
+                      />
+                      <div>
+                        <p className="text-[1.05rem] font-bold text-slate-900">{item.title}</p>
+                        <p className="text-lg text-slate-400">
+                          {new Date(item.dueDate).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      {index === 0 ? (
+                        <p className="text-sm font-bold uppercase tracking-[0.16em] text-rose-400">
+                          {item.dueInDays <= 0 ? "Due now" : `${item.dueInDays} days left`}
+                        </p>
+                      ) : null}
+                      <p className="text-[1.2rem] font-black text-slate-500">
+                        {formatCurrency(item.amount, store.settings.currencyCode)}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="mt-6">
+            <EmptyState
+              title="Nothing upcoming yet"
+              description="Recurring bills, debt payments, and planned payments will land here once you start planning the month."
+              actionLabel="Open plan"
+              onAction={() => navigate("/plan")}
+            />
+          </div>
+        )}
+      </section>
+
+      <div className="grid gap-4 md:grid-cols-3">
+        <section className="rounded-[2rem] bg-white/90 p-5 shadow-[0_22px_60px_rgba(148,163,184,0.14)]">
+          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-400">Balance</p>
+          <p className="mt-3 text-[2.1rem] font-black tracking-[-0.05em] text-slate-900">
+            {formatCurrency(monthly.balance, store.settings.currencyCode)}
+          </p>
+        </section>
+        <section className="rounded-[2rem] bg-white/90 p-5 shadow-[0_22px_60px_rgba(148,163,184,0.14)]">
+          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-400">Budget health</p>
+          <p className="mt-3 text-[2.1rem] font-black tracking-[-0.05em] text-slate-900">
+            {monthly.planned ? `${Math.round((monthly.spentAgainstBudget / monthly.planned) * 100)}%` : "Set up"}
+          </p>
+        </section>
+        <section className="rounded-[2rem] bg-white/90 p-5 shadow-[0_22px_60px_rgba(148,163,184,0.14)]">
+          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-400">Goals in motion</p>
+          <p className="mt-3 text-[2.1rem] font-black tracking-[-0.05em] text-slate-900">
+            {goals.length}
+          </p>
+        </section>
       </div>
     </section>
   );

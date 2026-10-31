@@ -1,3 +1,5 @@
+import { MonthlyInsightsPanel } from "../components/dashboard/MonthlyInsightsPanel";
+import { UpcomingPaymentsPanel } from "../components/dashboard/UpcomingPaymentsPanel";
 import { CategorySpendChart } from "../components/insights/CategorySpendChart";
 import { TrendCharts } from "../components/insights/TrendCharts";
 import { useStore } from "../store/useStore";
@@ -29,11 +31,13 @@ export default function Insights() {
         />
         <StatCard
           label="Due soon"
-          value={String(insight.upcomingBillsCount)}
-          hint="Recurring bills in the next 14 days"
-          tone={insight.upcomingBillsCount ? "warn" : "default"}
+          value={String(insight.upcomingPaymentsCount)}
+          hint="Payments due in the next 14 days"
+          tone={insight.upcomingPaymentsCount ? "warn" : "default"}
         />
       </div>
+      <MonthlyInsightsPanel />
+      <UpcomingPaymentsPanel />
       <TrendCharts />
       <CategorySpendChart />
     </section>

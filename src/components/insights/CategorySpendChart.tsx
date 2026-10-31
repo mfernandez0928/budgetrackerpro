@@ -39,7 +39,7 @@ export function CategorySpendChart() {
                 ))}
               </Pie>
               <Tooltip
-                formatter={(value: number) => formatCurrency(value, store.settings.currencyCode)}
+                formatter={(value) => formatCurrency(Number(value ?? 0), store.settings.currencyCode)}
                 contentStyle={{
                   background: "#020617",
                   border: "1px solid rgba(255,255,255,0.12)",

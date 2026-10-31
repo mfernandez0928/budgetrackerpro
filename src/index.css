@@ -4,9 +4,9 @@
 
 :root {
   font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
-  color: #f8fafc;
-  background: #020617;
-  color-scheme: dark;
+  color: #0f172a;
+  background: #f7f8f4;
+  color-scheme: light;
 }
 
 html,
@@ -18,8 +18,9 @@ body,
 body {
   margin: 0;
   background:
-    radial-gradient(circle at top left, rgba(20, 184, 166, 0.18), transparent 24rem),
-    linear-gradient(180deg, #020617 0%, #020617 55%, #041a18 100%);
+    radial-gradient(circle at top center, rgba(201, 236, 216, 0.65), transparent 28rem),
+    radial-gradient(circle at 80% 45%, rgba(191, 233, 255, 0.42), transparent 20rem),
+    linear-gradient(180deg, #fcfcfa 0%, #f7f8f4 100%);
 }
 
 * {
@@ -34,7 +35,7 @@ textarea {
 }
 
 ::selection {
-  background: rgba(45, 212, 191, 0.3);
+  background: rgba(100, 156, 96, 0.24);
 }
 
 @media (prefers-reduced-motion: reduce) {

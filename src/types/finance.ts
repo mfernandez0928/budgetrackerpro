@@ -1,6 +1,6 @@
 export type TransactionType = "income" | "expense" | "transfer";
 export type PaymentMethod = "cash" | "bank" | "card" | "ewallet" | "transfer";
-export type AccountType = "cash" | "bank" | "ewallet";
+export type AccountType = "cash" | "bank" | "ewallet" | "credit";
 export type ThemeMode = "system" | "light" | "dark";
 export type CurrencyCode = "USD" | "PHP" | "EUR" | "GBP";
 
@@ -10,14 +10,63 @@ export interface Category {
   color: string;
   icon: string;
   type: "income" | "expense";
+  isCustom?: boolean;
+  templateKey?: string;
 }
 
 export interface Account {
   id: string;
   name: string;
   type: AccountType;
+  classification: "debit" | "credit";
   openingBalance: number;
   color: string;
+  icon?: string;
+  currencyCode?: CurrencyCode;
+  institution?: string;
+  details?: string;
+  annualYield?: number;
+  creditLimit?: number;
+  liveRate?: number;
+  liveRateUpdatedAt?: string;
+  unitsLabel?: string;
+}
+
+export interface DebtItem {
+  id: string;
+  title: string;
+  creditor: string;
+  balance: number;
+  minimumPayment: number;
+  dueDate: string;
+}
+
+export interface MoneyOwedItem {
+  id: string;
+  title: string;
+  person: string;
+  amount: number;
+  dueDate: string;
+}
+
+export interface PlannedPayment {
+  id: string;
+  title: string;
+  amount: number;
+  dueDate: string;
+  categoryId: string;
+  accountId: string;
+  status: "planned" | "scheduled" | "paid";
+}
+
+export interface InstallmentPlan {
+  id: string;
+  title: string;
+  totalAmount: number;
+  paidAmount: number;
+  installmentAmount: number;
+  nextDueDate: string;
+  remainingPayments: number;
 }
 
 export interface Transaction {
@@ -92,6 +141,10 @@ export interface BudgetStoreState {
   budgets: Budget[];
   savingsGoals: SavingsGoal[];
   recurringBills: RecurringBill[];
+  debts: DebtItem[];
+  moneyOwed: MoneyOwedItem[];
+  plannedPayments: PlannedPayment[];
+  installments: InstallmentPlan[];
   settings: Settings;
   profile: Profile;
   addTransaction: (transaction: Omit<Transaction, "id" | "createdAt">) => void;
@@ -118,6 +171,14 @@ export interface BudgetStoreState {
   addAccount: (account: Omit<Account, "id">) => void;
   updateAccount: (accountId: string, updates: Partial<Omit<Account, "id">>) => void;
   deleteAccount: (accountId: string) => void;
+  addDebt: (debt: Omit<DebtItem, "id">) => void;
+  deleteDebt: (debtId: string) => void;
+  addMoneyOwed: (moneyOwed: Omit<MoneyOwedItem, "id">) => void;
+  deleteMoneyOwed: (moneyOwedId: string) => void;
+  addPlannedPayment: (payment: Omit<PlannedPayment, "id">) => void;
+  deletePlannedPayment: (paymentId: string) => void;
+  addInstallment: (installment: Omit<InstallmentPlan, "id">) => void;
+  deleteInstallment: (installmentId: string) => void;
   addCategory: (category: Omit<Category, "id">) => void;
   updateCategory: (
     categoryId: string,
@@ -138,6 +199,10 @@ export type BudgetStoreSnapshot = Pick<
   | "budgets"
   | "savingsGoals"
   | "recurringBills"
+  | "debts"
+  | "moneyOwed"
+  | "plannedPayments"
+  | "installments"
   | "settings"
   | "profile"
 >;

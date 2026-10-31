@@ -16,13 +16,13 @@ const pageTitles: Record<string, { title: string; subtitle: string }> = {
     title: "Transactions",
     subtitle: "Capture spending quickly and keep every account in sync.",
   },
-  "/planning": {
-    title: "Plan your month",
-    subtitle: "Set category budgets and stay ahead of recurring bills.",
+  "/wallet": {
+    title: "Wallet",
+    subtitle: "See every account, compare debit vs credit, and understand net worth.",
   },
-  "/goals": {
-    title: "Savings goals",
-    subtitle: "Turn plans into milestones with visible progress.",
+  "/plan": {
+    title: "Plan your money",
+    subtitle: "Manage budgets, goals, debt, receivables, and planned payments in one place.",
   },
   "/insights": {
     title: "Insights",
@@ -38,7 +38,9 @@ export function AppHeader() {
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const copy = pageTitles[pathname] ?? pageTitles["/dashboard"];
+  const copy =
+    pageTitles[pathname] ??
+    (pathname.startsWith("/wallet/") ? pageTitles["/wallet"] : pageTitles["/dashboard"]);
 
   return (
     <header className="sticky top-0 z-30 border-b border-white/10 bg-slate-950/85 backdrop-blur">

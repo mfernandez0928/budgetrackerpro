@@ -69,6 +69,10 @@ function migrateLegacyState(persistedState: unknown): BudgetStoreSnapshot {
     ...defaults,
     categories: legacyCategories,
     transactions,
+    debts: [],
+    moneyOwed: [],
+    plannedPayments: [],
+    installments: [],
     settings: {
       ...defaults.settings,
       currencyCode: normalizeCurrencyCode(
@@ -99,6 +103,10 @@ function mergeSnapshot(
     budgets: incoming.budgets ?? current.budgets,
     savingsGoals: incoming.savingsGoals ?? current.savingsGoals,
     recurringBills: incoming.recurringBills ?? current.recurringBills,
+    debts: incoming.debts ?? current.debts,
+    moneyOwed: incoming.moneyOwed ?? current.moneyOwed,
+    plannedPayments: incoming.plannedPayments ?? current.plannedPayments,
+    installments: incoming.installments ?? current.installments,
     settings: incoming.settings ? { ...current.settings, ...incoming.settings } : current.settings,
     profile: incoming.profile ? { ...current.profile, ...incoming.profile } : current.profile,
   };
@@ -249,6 +257,54 @@ export const useStore = create<BudgetStoreState>()(
           accounts: state.accounts.filter((account) => account.id !== accountId),
         })),
 
+      addDebt: (debt) =>
+        set((state) => ({
+          debts: [...state.debts, { ...debt, id: createId("debt") }],
+        })),
+
+      deleteDebt: (debtId) =>
+        set((state) => ({
+          debts: state.debts.filter((debt) => debt.id !== debtId),
+        })),
+
+      addMoneyOwed: (moneyOwed) =>
+        set((state) => ({
+          moneyOwed: [...state.moneyOwed, { ...moneyOwed, id: createId("owed") }],
+        })),
+
+      deleteMoneyOwed: (moneyOwedId) =>
+        set((state) => ({
+          moneyOwed: state.moneyOwed.filter((item) => item.id !== moneyOwedId),
+        })),
+
+      addPlannedPayment: (payment) =>
+        set((state) => ({
+          plannedPayments: [
+            ...state.plannedPayments,
+            { ...payment, id: createId("planned") },
+          ],
+        })),
+
+      deletePlannedPayment: (paymentId) =>
+        set((state) => ({
+          plannedPayments: state.plannedPayments.filter((payment) => payment.id !== paymentId),
+        })),
+
+      addInstallment: (installment) =>
+        set((state) => ({
+          installments: [
+            ...state.installments,
+            { ...installment, id: createId("installment") },
+          ],
+        })),
+
+      deleteInstallment: (installmentId) =>
+        set((state) => ({
+          installments: state.installments.filter(
+            (installment) => installment.id !== installmentId
+          ),
+        })),
+
       addCategory: (category) =>
         set((state) => ({
           categories: [...state.categories, { ...category, id: createId("cat") }],
@@ -298,6 +354,10 @@ export const useStore = create<BudgetStoreState>()(
         budgets: state.budgets,
         savingsGoals: state.savingsGoals,
         recurringBills: state.recurringBills,
+        debts: state.debts,
+        moneyOwed: state.moneyOwed,
+        plannedPayments: state.plannedPayments,
+        installments: state.installments,
         settings: state.settings,
         profile: state.profile,
       }),

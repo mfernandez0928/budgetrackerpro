@@ -2,6 +2,7 @@ import { useState } from "react";
 import { PencilSquareIcon, TrashIcon } from "@heroicons/react/24/outline";
 import { useStore } from "../../store/useStore";
 import { formatCurrency, getGoalProgress } from "../../lib/finance";
+import { EmptyState } from "../ui/EmptyState";
 import { ProgressBar } from "../ui/ProgressBar";
 import { SectionHeader } from "../ui/SectionHeader";
 import { showToast } from "../Toast";
@@ -148,6 +149,12 @@ export function SavingsGoalsPanel() {
             </div>
           </article>
         ))}
+        {!goalProgress.length ? (
+          <EmptyState
+            title="No savings goals yet"
+            description="Start with one named goal like an emergency fund or annual expense so saving feels measurable."
+          />
+        ) : null}
       </div>
     </section>
   );

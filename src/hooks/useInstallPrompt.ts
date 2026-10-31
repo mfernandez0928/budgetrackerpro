@@ -8,7 +8,9 @@ interface BeforeInstallPromptEvent extends Event {
 export function useInstallPrompt() {
   const [deferredPrompt, setDeferredPrompt] =
     useState<BeforeInstallPromptEvent | null>(null);
-  const [isInstalled, setIsInstalled] = useState(false);
+  const [isInstalled, setIsInstalled] = useState(
+    () => window.matchMedia("(display-mode: standalone)").matches,
+  );
 
   useEffect(() => {
     const handleBeforeInstall = (event: Event) => {
@@ -20,8 +22,6 @@ export function useInstallPrompt() {
       setIsInstalled(true);
       setDeferredPrompt(null);
     };
-
-    setIsInstalled(window.matchMedia("(display-mode: standalone)").matches);
 
     window.addEventListener("beforeinstallprompt", handleBeforeInstall);
     window.addEventListener("appinstalled", handleInstalled);

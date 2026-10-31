@@ -9,9 +9,10 @@ import { APP_BRANDING } from "./config/app";
 
 const Auth = lazy(() => import("./pages/Auth"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
+const Wallet = lazy(() => import("./pages/Wallet"));
+const WalletAccountDetail = lazy(() => import("./pages/WalletAccountDetail"));
 const Transactions = lazy(() => import("./pages/Transactions"));
-const Planning = lazy(() => import("./pages/Planning"));
-const Goals = lazy(() => import("./pages/Goals"));
+const Plan = lazy(() => import("./pages/Plan"));
 const Insights = lazy(() => import("./pages/Insights"));
 const Settings = lazy(() => import("./pages/Settings"));
 
@@ -57,9 +58,12 @@ function AppContent() {
           >
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/wallet" element={<Wallet />} />
+            <Route path="/wallet/:accountId" element={<WalletAccountDetail />} />
             <Route path="/transactions" element={<Transactions />} />
-            <Route path="/planning" element={<Planning />} />
-            <Route path="/goals" element={<Goals />} />
+            <Route path="/plan" element={<Plan />} />
+            <Route path="/planning" element={<Navigate to="/plan" replace />} />
+            <Route path="/goals" element={<Navigate to="/plan" replace />} />
             <Route path="/insights" element={<Insights />} />
             <Route path="/settings" element={<Settings />} />
           </Route>

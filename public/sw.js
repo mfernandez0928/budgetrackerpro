@@ -1,4 +1,4 @@
-const CACHE_NAME = "budget-tracker-pro-v1";
+const CACHE_NAME = "budget-tracker-pro-v2";
 const CORE_ASSETS = [
   "/",
   "/index.html",
@@ -51,16 +51,30 @@ self.addEventListener("fetch", (event) => {
 
   if (url.origin === self.location.origin) {
     event.respondWith(
-      caches.match(request).then((cached) => {
+      caches.match(request).then(async (cached) => {
         const networkFetch = fetch(request)
           .then((response) => {
             const copy = response.clone();
             caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
             return response;
-          })
-          .catch(() => cached);
+          });
 
-        return cached || networkFetch;
+        if (cached) {
+          networkFetch.catch(() => {
+            // Ignore background refresh failures when a cached asset already exists.
+          });
+          return cached;
+        }
+
+        try {
+          return await networkFetch;
+        } catch {
+          if (request.destination === "document") {
+            return (await caches.match("/offline.html")) || Response.error();
+          }
+
+          return Response.error();
+        }
       })
     );
   }

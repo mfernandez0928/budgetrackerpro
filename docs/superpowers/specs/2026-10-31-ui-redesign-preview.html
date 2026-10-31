@@ -1,0 +1,304 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Redesign Preview</title>
+<style>
+:root[data-theme="dark"]{--bg:#0b0d0c;--surface:#141715;--raised:#1c201d;--line:rgba(255,255,255,.08);--text:#f2f5f2;--muted:#8d968f;--brand:#6fbf6a;--brand-ink:#0d1a0c;--brand-deep:#2f6b2d;--pos:#7ad275;--neg:#ff7a7a;--chip:rgba(255,255,255,.06)}
+:root[data-theme="light"]{--bg:#f4f6f2;--surface:#ffffff;--raised:#f0f3ee;--line:rgba(15,23,15,.08);--text:#121712;--muted:#69736b;--brand:#4f9a4b;--brand-ink:#ffffff;--brand-deep:#3d7f3a;--pos:#2f8a2b;--neg:#d63c3c;--chip:rgba(15,23,15,.05)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:"Inter","Segoe UI",system-ui,sans-serif;padding:24px 16px 60px}
+h2.label{font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);margin:40px 0 12px;font-weight:600}
+.topbar{display:flex;justify-content:space-between;align-items:center;max-width:1280px;margin:0 auto}
+.toggle{background:var(--surface);color:var(--text);border:1px solid var(--line);border-radius:999px;padding:10px 16px;font:inherit;font-weight:600;cursor:pointer}
+.wrap{max-width:1280px;margin:0 auto}
+.frame{border:1px solid var(--line);border-radius:24px;overflow:hidden;background:var(--bg);display:grid;grid-template-columns:232px 1fr;min-height:760px}
+.side{background:var(--surface);border-right:1px solid var(--line);padding:22px 14px;display:flex;flex-direction:column;gap:4px}
+.brand{display:flex;align-items:center;gap:10px;padding:0 8px 18px}
+.logo{width:36px;height:36px;border-radius:12px;background:var(--brand);color:var(--brand-ink);display:grid;place-items:center;font-weight:800}
+.brand b{display:block;font-size:16px}.brand small{color:var(--muted);font-size:11px;letter-spacing:.12em}
+.add{margin:0 4px 14px;background:var(--brand);color:var(--brand-ink);border:0;border-radius:14px;padding:12px;font:inherit;font-weight:700;display:flex;gap:8px;justify-content:center;align-items:center}
+.grp{font-size:11px;letter-spacing:.16em;color:var(--muted);padding:14px 10px 6px;font-weight:600}
+.nav{display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:12px;color:var(--muted);font-weight:500;font-size:14px}
+.nav.on{background:color-mix(in srgb,var(--brand) 16%,transparent);color:var(--text);box-shadow:inset 3px 0 0 var(--brand)}
+.nav svg,.bn svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.main{padding:22px;display:flex;flex-direction:column;gap:16px;min-width:0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:22px;padding:18px}
+.hero{position:relative;overflow:hidden;border-radius:24px;padding:22px 24px;min-height:150px;display:flex;align-items:center;gap:18px;background:linear-gradient(120deg,#16301a 0%,#1f4a26 45%,#2e6b33 100%);color:#eef7ee}
+:root[data-theme="light"] .hero{background:linear-gradient(120deg,#dff0db 0%,#c7e6c1 50%,#a9d7a2 100%);color:#132313}
+.hero .hills{position:absolute;inset:auto 0 0 0;height:70px;opacity:.35}
+.hero .txt{position:relative;flex:1}
+.eyebrow{font-size:11px;letter-spacing:.18em;text-transform:uppercase;opacity:.75;font-weight:600}
+.hero h1{margin:6px 0 10px;font-size:30px;letter-spacing:-.02em}
+.bubble{display:inline-flex;gap:10px;align-items:flex-start;background:rgba(0,0,0,.25);border-radius:16px;padding:10px 14px;font-size:14px;max-width:520px}
+:root[data-theme="light"] .bubble{background:rgba(255,255,255,.65)}
+.bubble b{color:var(--brand)}
+.susi{position:relative;flex:0 0 auto}
+.seg{display:inline-flex;background:var(--chip);border-radius:999px;padding:4px;margin-left:auto}
+.seg span{padding:7px 14px;border-radius:999px;font-size:13px;font-weight:600;color:var(--muted)}
+.seg .on{background:var(--brand);color:var(--brand-ink)}
+.stats{display:grid;grid-template-columns:1.5fr repeat(3,1fr);gap:14px}
+.net{background:linear-gradient(140deg,#3f8d3b,#5fae58);color:#fff;border:0;position:relative;overflow:hidden}
+.net .amt{font-size:32px;font-weight:800;letter-spacing:-.02em;margin:8px 0 4px}
+.net small{opacity:.85}
+.net svg.spark{position:absolute;right:0;bottom:0;width:60%;height:70px;opacity:.6}
+.k{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.net .k{color:rgba(255,255,255,.85)}
+.v{font-size:22px;font-weight:800;margin:8px 0 2px;letter-spacing:-.01em}
+.s{font-size:13px;color:var(--muted)}
+.row2{display:grid;grid-template-columns:1.1fr 1fr;gap:14px}
+.hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.hd h3{margin:0;font-size:16px}
+.pill{font-size:12px;font-weight:600;color:var(--brand);border:1px solid color-mix(in srgb,var(--brand) 40%,transparent);border-radius:999px;padding:5px 12px}
+.stack{position:relative;height:178px}
+.wc{position:absolute;width:62%;aspect-ratio:1.586;border-radius:18px;padding:14px;color:#fff;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,.25);display:flex;flex-direction:column;justify-content:space-between}
+.wc .shape{position:absolute;right:-30%;top:-40%;width:90%;aspect-ratio:1;border-radius:50%;background:rgba(255,255,255,.12)}
+.wc .shape2{position:absolute;right:-10%;bottom:-55%;width:70%;aspect-ratio:1;border-radius:50%;background:rgba(0,0,0,.12)}
+.wc .top{display:flex;gap:8px;align-items:center;position:relative;font-weight:700;font-size:14px}
+.ini{width:26px;height:26px;border-radius:8px;background:rgba(255,255,255,.2);display:grid;place-items:center;font-size:11px;font-weight:800}
+.chip{width:30px;height:22px;border-radius:5px;background:linear-gradient(135deg,#f5d77a,#c9a33f);position:relative}
+.wc .bal{position:relative}.wc .bal small{font-size:9px;letter-spacing:.14em;opacity:.8;display:block}.wc .bal b{font-size:16px}
+.acts{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}
+.act{background:var(--raised);border:1px solid var(--line);border-radius:12px;padding:10px;text-align:center;font-size:13px;font-weight:600}
+.tx{display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid var(--line)}
+.tx:first-of-type{border-top:0}
+.ic{width:36px;height:36px;border-radius:11px;background:var(--raised);display:grid;place-items:center;font-size:15px}
+.tx .n{flex:1;min-width:0}.tx .n b{display:block;font-size:14px}.tx .n small{color:var(--muted);font-size:12px}
+.pos{color:var(--pos);font-weight:700}.neg{color:var(--neg);font-weight:700}
+.month{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.mt{background:var(--raised);border-radius:16px;padding:14px;display:flex;gap:12px;align-items:center}
+.dot{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-weight:800}
+.wtitle{display:flex;justify-content:space-between;align-items:flex-end}
+.wtitle h1{margin:4px 0 0;font-size:26px}
+.fab{width:44px;height:44px;border-radius:50%;background:var(--brand);color:var(--brand-ink);display:grid;place-items:center;font-size:24px;font-weight:600}
+.nw{background:linear-gradient(140deg,#2f6e2c,#4f9f49);color:#fff;border:0;display:flex;gap:18px;align-items:center}
+.nw .amt{font-size:34px;font-weight:800;margin:6px 0 14px}
+.al{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.al div{background:rgba(255,255,255,.14);border-radius:14px;padding:10px 14px;font-size:12px}
+.al b{display:block;font-size:17px;margin-top:2px}
+.tools{display:flex;justify-content:space-between;align-items:center}
+.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+.grid .wc{position:relative;width:100%}
+.use{height:5px;border-radius:9px;background:rgba(255,255,255,.3);margin-top:6px;position:relative}.use i{position:absolute;inset:0 auto 0 0;border-radius:9px;background:#fff}
+.phones{display:flex;gap:28px;flex-wrap:wrap}
+.phone{width:375px;max-width:100%;border:1px solid var(--line);border-radius:36px;overflow:hidden;background:var(--bg);position:relative;height:780px;display:flex;flex-direction:column}
+.status{height:44px;display:flex;justify-content:space-between;align-items:center;padding:0 24px;font-size:13px;font-weight:600}
+.pbody{flex:1;overflow:hidden;padding:4px 16px 0;display:flex;flex-direction:column;gap:12px}
+.ptop{display:flex;justify-content:space-between;align-items:center}
+.av{width:38px;height:38px;border-radius:50%;background:var(--raised);display:grid;place-items:center;font-weight:700}
+.hscroll{display:flex;gap:10px;overflow:hidden}
+.hscroll .card{min-width:150px;padding:14px}
+.bnav{position:absolute;left:12px;right:12px;bottom:14px;background:var(--surface);border:1px solid var(--line);border-radius:26px;padding:8px;display:grid;grid-template-columns:repeat(5,1fr);align-items:center}
+.bn{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:11px;font-weight:600;color:var(--muted);padding:6px 0;border-radius:16px}
+.bn.on{color:var(--brand)}
+.bn.plus{background:var(--brand);color:var(--brand-ink);width:54px;height:54px;border-radius:18px;justify-self:center;justify-content:center}
+.sheet{position:absolute;left:12px;right:12px;bottom:96px;background:var(--surface);border:1px solid var(--line);border-radius:22px;padding:8px}
+.sheet div{display:flex;gap:12px;align-items:center;padding:12px;border-radius:14px;font-weight:600;font-size:14px}
+.sheet div+div{border-top:1px solid var(--line)}
+.dim{position:absolute;inset:0;background:rgba(0,0,0,.45)}
+@media (max-width:1000px){.frame{grid-template-columns:1fr}.side{display:none}.stats,.row2,.month,.grid{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <symbol id="susi" viewBox="0 0 120 120">
+      <path d="M22 18 L44 46 L30 58 Z" fill="#6b7480"/>
+      <path d="M98 18 L76 46 L90 58 Z" fill="#6b7480"/>
+      <path d="M27 26 L40 45 L32 51 Z" fill="#e7b9a8"/>
+      <path d="M93 26 L80 45 L88 51 Z" fill="#e7b9a8"/>
+      <path d="M60 30 C84 30 98 48 98 68 C98 90 80 104 60 104 C40 104 22 90 22 68 C22 48 36 30 60 30 Z" fill="#8a94a0"/>
+      <path d="M60 52 C74 52 84 66 84 80 C84 96 72 104 60 104 C48 104 36 96 36 80 C36 66 46 52 60 52 Z" fill="#eef1f4"/>
+      <path d="M34 58 C40 52 48 52 52 58 C48 62 40 64 34 58 Z" fill="#eef1f4"/>
+      <path d="M86 58 C80 52 72 52 68 58 C72 62 80 64 86 58 Z" fill="#eef1f4"/>
+      <circle cx="44" cy="62" r="6" fill="#16202a"/><circle cx="76" cy="62" r="6" fill="#16202a"/>
+      <circle cx="46" cy="60" r="2" fill="#fff"/><circle cx="78" cy="60" r="2" fill="#fff"/>
+      <path d="M53 76 C53 72 67 72 67 76 C67 80 62 83 60 83 C58 83 53 80 53 76 Z" fill="#16202a"/>
+      <path d="M60 83 L60 88 M54 90 C57 93 63 93 66 90" stroke="#16202a" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+      <path d="M30 100 C44 110 76 110 90 100 L92 112 C76 120 44 120 28 112 Z" fill="#5fae58"/>
+      <path d="M78 106 L90 118 L82 120 L74 109 Z" fill="#3f8d3b"/>
+    </symbol>
+    <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></symbol>
+    <symbol id="i-wallet" viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="14" rx="3"/><path d="M16 13h2M3 10h18"/></symbol>
+    <symbol id="i-plan" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="1"/></symbol>
+    <symbol id="i-more" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/></symbol>
+    <symbol id="i-hist" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></symbol>
+    <symbol id="i-ins" viewBox="0 0 24 24"><path d="M4 19V9M10 19V5M16 19v-7M22 19H2"/></symbol>
+    <symbol id="i-set" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1.2l2-1.6-2-3.4-2.4 1a7 7 0 0 0-2-1.2L14 3h-4l-.5 2.6a7 7 0 0 0-2 1.2l-2.4-1-2 3.4 2 1.6A7 7 0 0 0 5 12c0 .4 0 .8.1 1.2l-2 1.6 2 3.4 2.4-1a7 7 0 0 0 2 1.2L10 21h4l.5-2.6a7 7 0 0 0 2-1.2l2.4 1 2-3.4-2-1.6c.1-.4.1-.8.1-1.2z"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  </defs>
+</svg>
+
+<div class="topbar">
+  <div><b style="font-size:18px">Redesign preview</b><div class="s">Mockup lang, hindi pa ito ang app. Dummy data.</div></div>
+  <button class="toggle" onclick="var r=document.documentElement;r.dataset.theme=r.dataset.theme==='dark'?'light':'dark';this.textContent=r.dataset.theme==='dark'?'Switch to light':'Switch to dark'">Switch to light</button>
+</div>
+
+<div class="wrap">
+<h2 class="label">Desktop: Dashboard</h2>
+<div class="frame">
+  <aside class="side">
+    <div class="brand"><div class="logo">B</div><div><b>BudgetPro</b><small>PERSONAL</small></div></div>
+    <button class="add"><svg width="18" height="18" style="stroke:currentColor;fill:none;stroke-width:2"><use href="#i-plus"/></svg>Add</button>
+    <div class="grp">MAIN</div>
+    <div class="nav on"><svg><use href="#i-home"/></svg>Home</div>
+    <div class="nav"><svg><use href="#i-wallet"/></svg>Wallet</div>
+    <div class="nav"><svg><use href="#i-plan"/></svg>Plan</div>
+    <div class="grp">MORE</div>
+    <div class="nav"><svg><use href="#i-hist"/></svg>History</div>
+    <div class="nav"><svg><use href="#i-ins"/></svg>Insights</div>
+    <div class="nav"><svg><use href="#i-set"/></svg>Settings</div>
+  </aside>
+  <main class="main">
+    <section class="hero">
+      <svg class="hills" viewBox="0 0 800 70" preserveAspectRatio="none"><path d="M0 50 C120 10 220 60 340 30 C460 0 560 55 680 25 C740 12 780 30 800 34 L800 70 L0 70Z" fill="currentColor"/></svg>
+      <div class="txt">
+        <div class="eyebrow">Saturday, October 31</div>
+        <h1>Good evening, Zo!</h1>
+        <div class="bubble"><span><b>Susi</b> &nbsp;Dining is 18% under budget this week. Keep it up and Payday Fund hits its goal by Nov 15.</span></div>
+      </div>
+      <svg class="susi" width="128" height="128"><use href="#susi"/></svg>
+    </section>
+
+    <div class="stats">
+      <div class="card net">
+        <div class="k">Net balance</div>
+        <div class="amt">₱100,193.57</div>
+        <small>Across 8 wallets</small>
+        <svg class="spark" viewBox="0 0 200 70" preserveAspectRatio="none"><path d="M0 60 L30 52 L55 58 L85 40 L110 46 L140 26 L165 32 L200 8" stroke="#fff" stroke-width="3" fill="none"/></svg>
+      </div>
+      <div class="card"><div class="k">Days until payday</div><div class="v">0 days</div><div class="s">ABC Company · ₱45,000</div></div>
+      <div class="card"><div class="k">Next bill</div><div class="v">₱5,120.00</div><div class="s">Meralco · Nov 29</div></div>
+      <div class="card"><div class="k">Left to spend</div><div class="v">₱13,271.23</div><div class="s">This month</div></div>
+    </div>
+
+    <div class="row2">
+      <div class="card">
+        <div class="hd"><h3>Wallets <span class="s">· 8</span></h3><span class="pill">All →</span></div>
+        <div class="stack">
+          <div class="wc" style="left:0;top:14px;background:linear-gradient(140deg,#0f766e,#14b8a6)"><div class="shape"></div></div>
+          <div class="wc" style="left:10%;top:7px;background:linear-gradient(140deg,#7c3aed,#a78bfa)"><div class="shape"></div></div>
+          <div class="wc" style="left:20%;top:0;background:linear-gradient(140deg,#d97706,#f59e0b)"><div class="shape"></div><div class="shape2"></div>
+            <div class="top"><span class="ini">₱</span>Cash Wallet</div><div class="chip"></div>
+            <div class="bal"><small>BALANCE</small><b>₱8,450.00</b></div></div>
+        </div>
+        <div class="acts"><div class="act">Open</div><div class="act">Expense</div><div class="act">Transfer</div></div>
+      </div>
+      <div class="card">
+        <div class="hd"><h3>Recent activity</h3><span class="pill">View all →</span></div>
+        <div class="tx"><div class="ic">↓</div><div class="n"><b>Salary</b><small>Main Bank · Oct 31</small></div><span class="pos">+₱45,000.00</span></div>
+        <div class="tx"><div class="ic">🍜</div><div class="n"><b>Lunch</b><small>E-Wallet · Oct 30</small></div><span class="neg">−₱285.00</span></div>
+        <div class="tx"><div class="ic">⚡</div><div class="n"><b>Meralco</b><small>Main Bank · Oct 29</small></div><span class="neg">−₱3,420.00</span></div>
+        <div class="tx"><div class="ic">%</div><div class="n"><b>Earned interest</b><small>Main Bank · Oct 28</small></div><span class="pos">+₱12.40</span></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="hd"><div><h3>This month</h3><div class="s">Oct 1 – Oct 31</div></div><div class="seg"><span class="on">Month</span><span>Week</span><span>Day</span></div></div>
+      <div class="month">
+        <div class="mt"><div class="dot" style="background:color-mix(in srgb,var(--pos) 20%,transparent);color:var(--pos)">↑</div><div><div class="s">Income</div><b>₱45,000.00</b></div></div>
+        <div class="mt"><div class="dot" style="background:color-mix(in srgb,var(--neg) 20%,transparent);color:var(--neg)">↓</div><div><div class="s">Expenses</div><b>₱28,450.00</b></div></div>
+        <div class="mt"><div class="dot" style="background:rgba(245,158,11,.2);color:#f59e0b">◎</div><div><div class="s">Savings</div><b>₱8,500.00</b></div></div>
+        <div class="mt"><div class="dot" style="background:rgba(56,189,248,.2);color:#38bdf8">%</div><div><div class="s">Savings rate</div><b>18.9%</b></div></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<h2 class="label">Desktop: Wallet</h2>
+<div class="frame">
+  <aside class="side">
+    <div class="brand"><div class="logo">B</div><div><b>BudgetPro</b><small>PERSONAL</small></div></div>
+    <button class="add"><svg width="18" height="18" style="stroke:currentColor;fill:none;stroke-width:2"><use href="#i-plus"/></svg>Add</button>
+    <div class="grp">MAIN</div>
+    <div class="nav"><svg><use href="#i-home"/></svg>Home</div>
+    <div class="nav on"><svg><use href="#i-wallet"/></svg>Wallet</div>
+    <div class="nav"><svg><use href="#i-plan"/></svg>Plan</div>
+    <div class="grp">MORE</div>
+    <div class="nav"><svg><use href="#i-hist"/></svg>History</div>
+    <div class="nav"><svg><use href="#i-ins"/></svg>Insights</div>
+    <div class="nav"><svg><use href="#i-set"/></svg>Settings</div>
+  </aside>
+  <main class="main">
+    <div class="wtitle"><div><div class="k">BudgetPro</div><h1>Wallet</h1></div><div class="fab">+</div></div>
+    <div class="card nw">
+      <div style="flex:1">
+        <div class="k" style="color:rgba(255,255,255,.85)">Net worth</div>
+        <div class="amt">₱104,901.46</div>
+        <div class="al"><div>Assets<b>₱198,021.46</b></div><div>Liabilities<b>₱93,120.00</b></div></div>
+      </div>
+      <svg width="110" height="110"><use href="#susi"/></svg>
+    </div>
+    <div class="tools"><div class="seg" style="margin:0"><span class="on">All</span><span>Debit</span><span>Credit</span></div><div class="seg"><span class="on">Grid</span><span>List</span></div></div>
+    <div class="grid">
+      <div class="wc" style="background:linear-gradient(140deg,#d97706,#f59e0b)"><div class="shape"></div><div class="shape2"></div><div class="top"><span class="ini">₱</span>Cash Wallet</div><div class="chip"></div><div class="bal"><small>BALANCE</small><b>₱8,450.00</b></div></div>
+      <div class="wc" style="background:linear-gradient(140deg,#0f766e,#14b8a6)"><div class="shape"></div><div class="shape2"></div><div class="top"><span class="ini">MB</span>Main Bank</div><div class="chip"></div><div class="bal"><small>BALANCE</small><b>₱62,310.20</b></div></div>
+      <div class="wc" style="background:linear-gradient(140deg,#1d4ed8,#3b82f6)"><div class="shape"></div><div class="shape2"></div><div class="top"><span class="ini">EW</span>E-Wallet</div><div class="chip"></div><div class="bal"><small>BALANCE</small><b>₱5,000.00</b></div></div>
+      <div class="wc" style="background:linear-gradient(140deg,#7c3aed,#a78bfa)"><div class="shape"></div><div class="shape2"></div><div class="top"><span class="ini">RC</span>Rewards Card</div><div class="chip"></div><div class="bal"><small>AVAILABLE CREDIT</small><b>₱33,500.00</b><div class="use"><i style="width:33%"></i></div></div></div>
+      <div class="wc" style="background:linear-gradient(140deg,#be123c,#f43f5e)"><div class="shape"></div><div class="shape2"></div><div class="top"><span class="ini">SA</span>Savings</div><div class="chip"></div><div class="bal"><small>BALANCE</small><b>₱17,881.23</b></div></div>
+      <div class="wc" style="background:linear-gradient(140deg,#15803d,#4ade80)"><div class="shape"></div><div class="shape2"></div><div class="top"><span class="ini">US</span>USD Account</div><div class="chip"></div><div class="bal"><small>BALANCE</small><b>$80.00</b></div></div>
+      <div class="wc" style="background:linear-gradient(140deg,#c2410c,#fb923c)"><div class="shape"></div><div class="shape2"></div><div class="top"><span class="ini">DS</span>Digital Savings</div><div class="chip"></div><div class="bal"><small>BALANCE</small><b>₱35,345.80</b></div></div>
+      <div class="wc" style="background:linear-gradient(140deg,#334155,#64748b)"><div class="shape"></div><div class="shape2"></div><div class="top"><span class="ini">CC</span>Travel Card</div><div class="chip"></div><div class="bal"><small>AVAILABLE CREDIT</small><b>₱39,000.00</b><div class="use"><i style="width:3%"></i></div></div></div>
+    </div>
+  </main>
+</div>
+
+<h2 class="label">Mobile (PWA): Home at More menu</h2>
+<div class="phones">
+  <div class="phone">
+    <div class="status"><span>9:41</span><span>●●● 5G ▮</span></div>
+    <div class="pbody">
+      <div class="ptop"><div><div class="k">Sat, Oct 31</div><b style="font-size:22px">Good evening, Zo!</b></div><div class="av">Z</div></div>
+      <section class="hero" style="min-height:0;padding:14px 16px;gap:10px">
+        <div class="txt"><div class="bubble" style="font-size:13px"><span><b>Susi</b> &nbsp;Dining is 18% under budget this week.</span></div></div>
+        <svg class="susi" width="72" height="72"><use href="#susi"/></svg>
+      </section>
+      <div class="card net" style="padding:16px"><div class="k">Net balance</div><div class="amt" style="font-size:28px">₱100,193.57</div><small>Across 8 wallets</small>
+        <svg class="spark" viewBox="0 0 200 70" preserveAspectRatio="none"><path d="M0 60 L30 52 L55 58 L85 40 L110 46 L140 26 L165 32 L200 8" stroke="#fff" stroke-width="3" fill="none"/></svg></div>
+      <div class="hscroll">
+        <div class="card"><div class="k">Payday</div><div class="v" style="font-size:18px">0 days</div><div class="s">ABC Company</div></div>
+        <div class="card"><div class="k">Next bill</div><div class="v" style="font-size:18px">₱5,120</div><div class="s">Meralco</div></div>
+        <div class="card"><div class="k">Left</div><div class="v" style="font-size:18px">₱13,271</div><div class="s">This month</div></div>
+      </div>
+      <div class="card" style="padding:14px">
+        <div class="hd" style="margin-bottom:6px"><h3>Recent activity</h3><span class="pill">All</span></div>
+        <div class="tx"><div class="ic">↓</div><div class="n"><b>Salary</b><small>Main Bank</small></div><span class="pos">+₱45,000</span></div>
+        <div class="tx"><div class="ic">🍜</div><div class="n"><b>Lunch</b><small>E-Wallet</small></div><span class="neg">−₱285</span></div>
+      </div>
+    </div>
+    <nav class="bnav">
+      <div class="bn on"><svg><use href="#i-home"/></svg>Home</div>
+      <div class="bn"><svg><use href="#i-wallet"/></svg>Wallet</div>
+      <div class="bn plus"><svg style="width:26px;height:26px"><use href="#i-plus"/></svg></div>
+      <div class="bn"><svg><use href="#i-plan"/></svg>Plan</div>
+      <div class="bn"><svg><use href="#i-more"/></svg>More</div>
+    </nav>
+  </div>
+
+  <div class="phone">
+    <div class="status"><span>9:41</span><span>●●● 5G ▮</span></div>
+    <div class="pbody">
+      <div class="ptop"><div><div class="k">BudgetPro</div><b style="font-size:22px">Wallet</b></div><div class="av">Z</div></div>
+      <div class="card nw" style="padding:16px"><div style="flex:1"><div class="k" style="color:rgba(255,255,255,.85)">Net worth</div><div class="amt" style="font-size:26px;margin-bottom:10px">₱104,901.46</div><div class="al"><div>Assets<b style="font-size:14px">₱198,021</b></div><div>Liabilities<b style="font-size:14px">₱93,120</b></div></div></div></div>
+      <div class="wc" style="position:relative;width:100%;background:linear-gradient(140deg,#0f766e,#14b8a6)"><div class="shape"></div><div class="shape2"></div><div class="top"><span class="ini">MB</span>Main Bank</div><div class="chip"></div><div class="bal"><small>BALANCE</small><b>₱62,310.20</b></div></div>
+    </div>
+    <div class="dim"></div>
+    <div class="sheet">
+      <div><svg width="20" height="20" style="stroke:currentColor;fill:none;stroke-width:1.8"><use href="#i-hist"/></svg>History</div>
+      <div><svg width="20" height="20" style="stroke:currentColor;fill:none;stroke-width:1.8"><use href="#i-ins"/></svg>Insights</div>
+      <div><svg width="20" height="20" style="stroke:currentColor;fill:none;stroke-width:1.8"><use href="#i-set"/></svg>Settings</div>
+      <div style="color:var(--neg)">Sign out</div>
+    </div>
+    <nav class="bnav">
+      <div class="bn"><svg><use href="#i-home"/></svg>Home</div>
+      <div class="bn"><svg><use href="#i-wallet"/></svg>Wallet</div>
+      <div class="bn plus"><svg style="width:26px;height:26px"><use href="#i-plus"/></svg></div>
+      <div class="bn"><svg><use href="#i-plan"/></svg>Plan</div>
+      <div class="bn on"><svg><use href="#i-more"/></svg>More</div>
+    </nav>
+  </div>
+</div>
+</div>
+</body>
+</html>

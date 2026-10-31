@@ -15,6 +15,7 @@ function emit() {
   listeners.forEach((listener) => listener([...queue]));
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function showToast(message: string, type: ToastType = "info", duration = 3200) {
   const id = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
   queue.push({ id, message, type });
