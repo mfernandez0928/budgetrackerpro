@@ -3,9 +3,11 @@ import {
   clampPercent,
   getActiveNavKey,
   groupByDay,
+  nextFocusIndex,
   progressTone,
   readSidebarCollapsed,
   resolveTheme,
+  writeSidebarCollapsed,
 } from "./ui";
 
 describe("resolveTheme", () => {
@@ -44,6 +46,23 @@ describe("readSidebarCollapsed", () => {
     ).toBe(false);
   });
 
+  it("defaults to false when the localStorage getter itself throws", () => {
+    const original = Object.getOwnPropertyDescriptor(globalThis, "localStorage");
+    Object.defineProperty(globalThis, "localStorage", {
+      configurable: true,
+      get() {
+        throw new Error("SecurityError");
+      },
+    });
+    try {
+      expect(readSidebarCollapsed()).toBe(false);
+      expect(() => writeSidebarCollapsed(true)).not.toThrow();
+    } finally {
+      if (original) Object.defineProperty(globalThis, "localStorage", original);
+      else delete (globalThis as { localStorage?: Storage }).localStorage;
+    }
+  });
+
   it("reads stored true", () => {
     expect(readSidebarCollapsed({ getItem: () => "1" })).toBe(true);
   });
@@ -76,5 +95,36 @@ describe("groupByDay", () => {
     const groups = groupByDay(items, "2026-10-31");
     expect(groups.map((g) => g.label)).toEqual(["Today", "Yesterday", "Oct 29"]);
     expect(groups[0].items.map((i) => i.id)).toEqual([2, 4]);
+    expect(groups.map((g) => g.key)).toEqual(["2026-10-31", "2026-10-30", "2026-10-29"]);
+  });
+
+  it("keeps same calendar day in different years apart and labels the older year", () => {
+    const items = [
+      { id: 1, date: "2026-10-29" },
+      { id: 2, date: "2025-10-29" },
+    ];
+    const groups = groupByDay(items, "2026-10-31");
+    expect(groups.map((g) => g.key)).toEqual(["2026-10-29", "2025-10-29"]);
+    expect(groups.map((g) => g.label)).toEqual(["Oct 29", "Oct 29, 2025"]);
+  });
+});
+
+describe("nextFocusIndex", () => {
+  it("wraps forward from the last item to the first", () => {
+    expect(nextFocusIndex(2, 3, false)).toBe(0);
+  });
+
+  it("wraps backward from the first item to the last", () => {
+    expect(nextFocusIndex(0, 3, true)).toBe(2);
+  });
+
+  it("returns null when focus is in the middle so Tab moves normally", () => {
+    expect(nextFocusIndex(1, 3, false)).toBeNull();
+    expect(nextFocusIndex(1, 3, true)).toBeNull();
+  });
+
+  it("pulls focus back in when it is outside the dialog", () => {
+    expect(nextFocusIndex(-1, 3, false)).toBe(0);
+    expect(nextFocusIndex(-1, 3, true)).toBe(2);
   });
 });

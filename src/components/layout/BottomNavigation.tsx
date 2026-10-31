@@ -1,5 +1,6 @@
 import { EllipsisHorizontalIcon, PlusIcon, XMarkIcon } from "@heroicons/react/24/outline";
-import { useEffect, useState } from "react";
+import { useCallback, useRef, useState } from "react";
+import { useDialogFocus } from "../../hooks/useDialogFocus";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { getActiveNavKey } from "../../lib/ui";
 import { MoreSheet } from "./MoreSheet";
@@ -17,14 +18,10 @@ export function BottomNavigation() {
   const [addOpen, setAddOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
 
-  useEffect(() => {
-    if (!addOpen) return;
-    const handleKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setAddOpen(false);
-    };
-    window.addEventListener("keydown", handleKey);
-    return () => window.removeEventListener("keydown", handleKey);
-  }, [addOpen]);
+  const addRef = useRef<HTMLDivElement>(null);
+  const closeAdd = useCallback(() => setAddOpen(false), []);
+  const closeMore = useCallback(() => setMoreOpen(false), []);
+  useDialogFocus(addOpen, addRef, closeAdd);
 
   const [home, wallet, plan] = primaryNav;
   const renderLink = (item: typeof home) => (
@@ -40,6 +37,7 @@ export function BottomNavigation() {
         <div className="fixed inset-0 z-40 md:hidden">
           <div className="absolute inset-0 bg-black/50" onClick={() => setAddOpen(false)} aria-hidden="true" />
           <div
+            ref={addRef}
             role="dialog"
             aria-modal="true"
             aria-label="Quick add"
@@ -79,7 +77,7 @@ export function BottomNavigation() {
         </div>
       ) : null}
 
-      <MoreSheet open={moreOpen} onClose={() => setMoreOpen(false)} />
+      <MoreSheet open={moreOpen} onClose={closeMore} />
 
       <div className="pb-safe fixed inset-x-0 bottom-0 z-50 px-3 md:hidden">
         <nav

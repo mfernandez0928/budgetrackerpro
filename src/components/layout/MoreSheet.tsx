@@ -1,5 +1,6 @@
 import { ArrowRightOnRectangleIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
-import { useEffect, useRef } from "react";
+import { useRef } from "react";
+import { useDialogFocus } from "../../hooks/useDialogFocus";
 import { NavLink } from "react-router-dom";
 import { useSignOut } from "../../hooks/useSignOut";
 import { moreNav } from "./navigation";
@@ -11,17 +12,8 @@ interface MoreSheetProps {
 
 export function MoreSheet({ open, onClose }: MoreSheetProps) {
   const signOut = useSignOut();
-  const firstItem = useRef<HTMLAnchorElement>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    firstItem.current?.focus();
-    const handleKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", handleKey);
-    return () => window.removeEventListener("keydown", handleKey);
-  }, [open, onClose]);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useDialogFocus(open, dialogRef, onClose);
 
   if (!open) return null;
 
@@ -29,15 +21,15 @@ export function MoreSheet({ open, onClose }: MoreSheetProps) {
     <div className="fixed inset-0 z-40 md:hidden">
       <div className="absolute inset-0 bg-black/50" onClick={onClose} aria-hidden="true" />
       <div
+        ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-label="More"
         className="absolute inset-x-3 bottom-[calc(96px+env(safe-area-inset-bottom))] rounded-3xl border border-line bg-surface p-2"
       >
-        {moreNav.map((item, index) => (
+        {moreNav.map((item) => (
           <NavLink
             key={item.to}
-            ref={index === 0 ? firstItem : undefined}
             to={item.to}
             onClick={onClose}
             className={({ isActive }) =>

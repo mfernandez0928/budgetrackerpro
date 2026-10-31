@@ -28,7 +28,7 @@ export function OnboardingGuide() {
         </span>
       </div>
       <div className="mt-4">
-        <ProgressBar value={checklist.completed / checklist.total} />
+        <ProgressBar value={checklist.completed / checklist.total} colorClass="bg-brand" />
       </div>
       <div className="mt-4 space-y-3">
         {checklist.steps.map((step) => (

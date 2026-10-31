@@ -23,22 +23,18 @@ export function getActiveNavKey(pathname: string): NavKey | null {
 
 const SIDEBAR_KEY = "btp.sidebarCollapsed";
 
-export function readSidebarCollapsed(
-  storage: Pick<Storage, "getItem"> = window.localStorage,
-): boolean {
+export function readSidebarCollapsed(storage?: Pick<Storage, "getItem">): boolean {
   try {
-    return storage.getItem(SIDEBAR_KEY) === "1";
+    // Resolve inside try: reading globalThis.localStorage itself throws when site data is blocked.
+    return (storage ?? globalThis.localStorage).getItem(SIDEBAR_KEY) === "1";
   } catch {
     return false;
   }
 }
 
-export function writeSidebarCollapsed(
-  value: boolean,
-  storage: Pick<Storage, "setItem"> = window.localStorage,
-): void {
+export function writeSidebarCollapsed(value: boolean, storage?: Pick<Storage, "setItem">): void {
   try {
-    storage.setItem(SIDEBAR_KEY, value ? "1" : "0");
+    (storage ?? globalThis.localStorage).setItem(SIDEBAR_KEY, value ? "1" : "0");
   } catch {
     // Storage blocked (private mode); collapse state just won't persist.
   }
@@ -58,7 +54,7 @@ export function clampPercent(ratio: number): number {
   return Math.max(0, Math.min(100, Math.round(ratio * 100)));
 }
 
-function parseLocalDate(dateISO: string) {
+export function parseLocalDate(dateISO: string) {
   const [year, month, day] = dateISO.slice(0, 10).split("-").map(Number);
   return new Date(year, month - 1, day);
 }
@@ -69,13 +65,19 @@ function dayLabel(dateISO: string, today: string) {
   );
   if (diffDays === 0) return "Today";
   if (diffDays === 1) return "Yesterday";
-  return parseLocalDate(dateISO).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  const date = parseLocalDate(dateISO);
+  const sameYear = date.getFullYear() === parseLocalDate(today).getFullYear();
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    ...(sameYear ? {} : { year: "numeric" }),
+  });
 }
 
 export function groupByDay<T extends { date: string }>(
   items: T[],
   today: string,
-): { label: string; items: T[] }[] {
+): { key: string; label: string; items: T[] }[] {
   const groups = new Map<string, T[]>();
   for (const item of items) {
     const key = item.date.slice(0, 10);
@@ -86,5 +88,14 @@ export function groupByDay<T extends { date: string }>(
 
   return [...groups.entries()]
     .sort(([a], [b]) => (a < b ? 1 : a > b ? -1 : 0))
-    .map(([key, groupItems]) => ({ label: dayLabel(key, today), items: groupItems }));
+    .map(([key, groupItems]) => ({ key, label: dayLabel(key, today), items: groupItems }));
+}
+
+// Focus-trap step for dialogs: where Tab should land, or null to let the browser move normally.
+export function nextFocusIndex(current: number, count: number, backwards: boolean): number | null {
+  if (count === 0) return null;
+  if (current < 0) return backwards ? count - 1 : 0;
+  if (backwards && current === 0) return count - 1;
+  if (!backwards && current === count - 1) return 0;
+  return null;
 }

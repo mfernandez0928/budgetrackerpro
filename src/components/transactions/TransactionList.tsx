@@ -89,7 +89,7 @@ export function TransactionList() {
       ) : null}
 
       {groupByDay(filteredTransactions, getTodayISO()).map((group) => (
-      <div key={group.label} className="space-y-2">
+      <div key={group.key} className="space-y-2">
         <p className="px-1 pt-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">
           {group.label}
         </p>

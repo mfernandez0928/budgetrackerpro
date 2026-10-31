@@ -107,7 +107,7 @@ export function SavingsGoalsPanel() {
               />
             </div>
             <div className="mt-4 space-y-2">
-              <ProgressBar value={goal.progress} />
+              <ProgressBar value={goal.progress} colorClass="bg-brand" />
               <div className="flex items-center justify-between text-sm text-muted">
                 <span>
                   {formatCurrency(goal.currentAmount, settings.currencyCode)} saved
