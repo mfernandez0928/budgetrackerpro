@@ -2,6 +2,7 @@ import { useRef, type ReactNode } from "react";
 import { ArrowDownTrayIcon, ArrowUpTrayIcon, DevicePhoneMobileIcon } from "@heroicons/react/24/outline";
 import { useStore } from "../store/useStore";
 import { useAuth } from "../context/AuthContext";
+import { useSyncStatus } from "../hooks/useCloudSync";
 import { getCurrencyOptions } from "../lib/finance";
 import { exportSnapshotAsJson, exportTransactionsAsCsv, parseCsvTransactions, parseJsonSnapshot } from "../lib/export";
 import { Card } from "../components/ui/Card";
@@ -39,6 +40,15 @@ export default function Settings() {
   const store = useStore();
   const { user } = useAuth();
   const importRef = useRef<HTMLInputElement>(null);
+  const sync = useSyncStatus();
+  const syncLabel =
+    sync.status === "error"
+      ? `Cloud sync failed: ${sync.error}`
+      : sync.status === "syncing"
+      ? "Syncing with your account…"
+      : sync.lastSyncedAt
+      ? `Synced across your devices · ${new Date(sync.lastSyncedAt).toLocaleString()}`
+      : "Cloud sync starts once you are online.";
 
   function downloadFile(filename: string, content: string, type: string) {
     const blob = new Blob([content], { type });
@@ -66,6 +76,9 @@ export default function Settings() {
             <p className="truncate text-sm text-muted">{user?.email ?? "Signed in with Google"}</p>
           </div>
         </div>
+        <p className={`mt-4 text-sm ${sync.status === "error" ? "text-neg" : "text-muted"}`}>
+          {syncLabel}
+        </p>
       </Card>
 
       <Card title="Appearance">
@@ -213,7 +226,7 @@ export default function Settings() {
             <p className="text-sm font-semibold text-ink">Install guidance</p>
             <p className="mt-1 text-sm text-muted">
               Use the install prompt when available. Core assets are cached, and offline entry
-              continues to work because all budgeting data stays local-first.
+              continues to work because data saves on this device first and syncs when you are back online.
             </p>
           </div>
         </div>
@@ -222,13 +235,14 @@ export default function Settings() {
       <section className="rounded-3xl border border-neg/30 bg-neg/10 p-4 md:p-5">
         <p className="text-base font-semibold text-ink">Start fresh</p>
         <p className="mt-1 text-sm text-muted">
-          Clear local budgets, goals, accounts, and transactions from this device.
+          Clear budgets, goals, accounts, and transactions. This also clears them on your other
+          devices once they sync.
         </p>
         <button
           type="button"
           onClick={() => {
             const confirmed = window.confirm(
-              "Reset all local app data on this device? This cannot be undone."
+              "Reset all app data on this device and your synced devices? This cannot be undone."
             );
             if (!confirmed) return;
             store.resetToDefaults();

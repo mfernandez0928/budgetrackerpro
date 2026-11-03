@@ -3,9 +3,13 @@ import { BottomNavigation } from "./BottomNavigation";
 import { Sidebar } from "./Sidebar";
 import { InstallPromptCard } from "../pwa/InstallPromptCard";
 import { useOnlineStatus } from "../../hooks/useOnlineStatus";
+import { useCloudSync } from "../../hooks/useCloudSync";
+import { useAuth } from "../../context/AuthContext";
 
 export function AppShell() {
   const isOnline = useOnlineStatus();
+  const { user } = useAuth();
+  useCloudSync(user?.uid);
 
   return (
     <div className="min-h-screen bg-canvas text-ink md:flex">
@@ -14,7 +18,7 @@ export function AppShell() {
       <div className="min-w-0 flex-1">
         {!isOnline ? (
           <div className="pt-safe sticky top-0 z-30 border-b border-warn/30 bg-surface px-4 py-3 text-sm text-warn">
-            You are offline. New entries are still saved locally on this device.
+            You are offline. New entries save on this device and sync when you are back online.
           </div>
         ) : null}
 
