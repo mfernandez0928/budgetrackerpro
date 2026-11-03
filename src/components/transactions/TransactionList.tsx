@@ -6,6 +6,7 @@ import {
 } from "@heroicons/react/24/outline";
 import { useStore } from "../../store/useStore";
 import { formatCurrency } from "../../lib/finance";
+import { accountCurrency } from "../../lib/fx";
 import { getTodayISO } from "../../lib/date";
 import { groupByDay } from "../../lib/ui";
 import { EmptyState } from "../ui/EmptyState";
@@ -153,7 +154,7 @@ export function TransactionList() {
                 <div className="flex items-center justify-between gap-3 sm:block sm:text-right">
                   <p className={`text-lg font-semibold ${tone}`}>
                     {prefix}
-                    {formatCurrency(transaction.amount, settings.currencyCode)}
+                    {formatCurrency(transaction.amount, accountCurrency(account, settings.currencyCode))}
                   </p>
                   <p className="mt-1 text-xs uppercase tracking-[0.14em] text-muted">
                     {transaction.paymentMethod}

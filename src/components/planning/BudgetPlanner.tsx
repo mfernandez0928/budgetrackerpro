@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useStore } from "../../store/useStore";
+import { useMainCurrencyView } from "../../hooks/useFxRates";
 import { formatCurrency, getBudgetRecommendations, getBudgetUsage } from "../../lib/finance";
 import { getMonthKey } from "../../lib/date";
 import { ProgressBar } from "../ui/ProgressBar";
@@ -10,8 +11,9 @@ import { showToast } from "../Toast";
 export function BudgetPlanner() {
   const { categories, settings, upsertBudget, budgets } = useStore();
   const expenseCategories = categories.filter((category) => category.type === "expense");
-  const budgetUsage = getBudgetUsage(useStore.getState(), getMonthKey());
-  const recommendations = getBudgetRecommendations(useStore.getState());
+  const view = useMainCurrencyView();
+  const budgetUsage = getBudgetUsage(view, getMonthKey());
+  const recommendations = getBudgetRecommendations(view);
   const [drafts, setDrafts] = useState<Record<string, string>>(
     Object.fromEntries(
       budgets

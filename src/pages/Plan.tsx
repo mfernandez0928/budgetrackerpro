@@ -18,6 +18,7 @@ import { CATEGORY_TEMPLATES } from "../lib/catalog";
 import { formatCurrency, getBudgetUsage, getGoalProgress, getUpcomingPayments } from "../lib/finance";
 import { getMonthKey } from "../lib/date";
 import { useStore } from "../store/useStore";
+import { useMainCurrencyView } from "../hooks/useFxRates";
 
 type PlanView =
   | "index"
@@ -52,7 +53,8 @@ export default function Plan() {
   const [budgetLimit, setBudgetLimit] = useState("249");
 
   const monthKey = getMonthKey();
-  const budgetUsage = getBudgetUsage(store, monthKey);
+  const mainView = useMainCurrencyView();
+  const budgetUsage = getBudgetUsage(mainView, monthKey);
   const goals = getGoalProgress(store.savingsGoals);
   const upcoming = getUpcomingPayments(store, 30);
   const customCategories = store.categories.filter((category) => category.type === "expense" && category.isCustom);

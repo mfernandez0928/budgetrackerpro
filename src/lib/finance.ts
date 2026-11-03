@@ -16,6 +16,7 @@ import {
   getMonthKey,
   getMonthKeyFromISO,
 } from "./date";
+import { accountCurrency, convertAmount, type FxRates } from "./fx";
 
 export const DEFAULT_CATEGORIES: Category[] = [
   { id: "income-salary", name: "Salary", color: "#10b981", icon: "salary", type: "income" },
@@ -40,7 +41,6 @@ export const DEFAULT_ACCOUNTS: Account[] = [
     openingBalance: 0,
     color: "#f59e0b",
     icon: "₱",
-    currencyCode: "PHP",
     details: "Debit • PHP",
   },
   {
@@ -51,7 +51,6 @@ export const DEFAULT_ACCOUNTS: Account[] = [
     openingBalance: 0,
     color: "#0f766e",
     icon: "B",
-    currencyCode: "PHP",
     details: "Debit • PHP",
   },
   {
@@ -62,7 +61,6 @@ export const DEFAULT_ACCOUNTS: Account[] = [
     openingBalance: 0,
     color: "#3b82f6",
     icon: "E",
-    currencyCode: "PHP",
     details: "Debit • PHP",
   },
   {
@@ -73,7 +71,6 @@ export const DEFAULT_ACCOUNTS: Account[] = [
     openingBalance: 0,
     color: "#8b5cf6",
     icon: "C",
-    currencyCode: "PHP",
     details: "Credit • PHP",
     creditLimit: 10000,
   },
@@ -304,7 +301,7 @@ export function getAccountBalances(snapshot: BudgetStoreSnapshot) {
     const balance = snapshot.transactions.reduce((total, transaction) => {
       if (transaction.type === "transfer") {
         if (transaction.accountId === account.id) return total - transaction.amount;
-        if (transaction.toAccountId === account.id) return total + transaction.amount;
+        if (transaction.toAccountId === account.id) return total + (transaction.toAmount ?? transaction.amount);
         return total;
       }
       if (transaction.accountId !== account.id) return total;
@@ -320,12 +317,17 @@ export function getAccountBalances(snapshot: BudgetStoreSnapshot) {
   });
 }
 
-export function getWalletSummary(snapshot: BudgetStoreSnapshot) {
-  const balances = getAccountBalances(snapshot);
+export function getWalletSummary(snapshot: BudgetStoreSnapshot, rates: FxRates | null = null) {
+  const main = snapshot.settings.currencyCode;
+  // balance stays in the account's own currency; mainBalance is it converted for totals.
+  const balances = getAccountBalances(snapshot).map((account) => ({
+    ...account,
+    mainBalance: convertAmount(account.balance, accountCurrency(account, main), main, rates),
+  }));
   const debitAccounts = balances.filter((account) => account.classification === "debit");
   const creditAccounts = balances.filter((account) => account.classification === "credit");
-  const assets = debitAccounts.reduce((sum, account) => sum + account.balance, 0);
-  const creditUsed = creditAccounts.reduce((sum, account) => sum + Math.max(0, account.balance), 0);
+  const assets = debitAccounts.reduce((sum, account) => sum + account.mainBalance, 0);
+  const creditUsed = creditAccounts.reduce((sum, account) => sum + Math.max(0, account.mainBalance), 0);
   const debts = snapshot.debts.reduce((sum, debt) => sum + debt.balance, 0);
   const receivables = snapshot.moneyOwed.reduce((sum, item) => sum + item.amount, 0);
 

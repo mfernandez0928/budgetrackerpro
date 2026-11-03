@@ -8,12 +8,12 @@ import {
   YAxis,
 } from "recharts";
 import { useChartColors } from "../../hooks/useChartColors";
-import { useStore } from "../../store/useStore";
+import { useMainCurrencyView } from "../../hooks/useFxRates";
 import { formatCurrency, getTrendData } from "../../lib/finance";
 import { EmptyState } from "../ui/EmptyState";
 
 export function TrendCharts() {
-  const store = useStore();
+  const store = useMainCurrencyView();
   const colors = useChartColors();
   const data = getTrendData(store);
 

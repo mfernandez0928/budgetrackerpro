@@ -1,9 +1,9 @@
 import { LightBulbIcon } from "@heroicons/react/24/outline";
-import { useStore } from "../../store/useStore";
+import { useMainCurrencyView } from "../../hooks/useFxRates";
 import { getMonthlyInsightSummary } from "../../lib/finance";
 
 export function MonthlyInsightsPanel() {
-  const store = useStore();
+  const store = useMainCurrencyView();
   const insight = getMonthlyInsightSummary(store);
 
   return (

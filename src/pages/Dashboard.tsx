@@ -15,6 +15,7 @@ import { Card, CardLink } from "../components/ui/Card";
 import { EmptyState } from "../components/ui/EmptyState";
 import { WalletCard } from "../components/ui/WalletCard";
 import { useStore } from "../store/useStore";
+import { useFxStore, useMainCurrencyView } from "../hooks/useFxRates";
 import {
   formatCurrency,
   getMonthlyInsightSummary,
@@ -24,6 +25,7 @@ import {
   getWalletSummary,
 } from "../lib/finance";
 import { accountInitials } from "../lib/ui";
+import { accountCurrency } from "../lib/fx";
 import { daysUntil, getTodayISO } from "../lib/date";
 
 const HIDDEN = "••••••";
@@ -76,9 +78,11 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const [hidden, setHidden] = useState(false);
   const currency = store.settings.currencyCode;
-  const monthly = getMonthlySummary(store);
-  const monthlyInsights = getMonthlyInsightSummary(store);
-  const wallet = getWalletSummary(store);
+  const view = useMainCurrencyView();
+  const rates = useFxStore((state) => state.rates);
+  const monthly = getMonthlySummary(view);
+  const monthlyInsights = getMonthlyInsightSummary(view);
+  const wallet = getWalletSummary(store, rates);
   const upcoming = getUpcomingPayments(store, 30);
   const recent = getRecentTransactions(store.transactions, 6);
   const profileName = store.profile.hasCompletedOnboarding ? "Bryl" : "there";
@@ -257,14 +261,14 @@ export default function Dashboard() {
                     >
                       <WalletCard
                         name={account.name}
-                        initials={accountInitials(account.name, account.icon, currency)}
+                        initials={accountInitials(account.name, account.icon, accountCurrency(account, currency))}
                         color={account.color}
                         label={account.classification === "credit" ? "Available credit" : "Balance"}
                         amount={money(
                           account.classification === "credit" && account.creditLimit
                             ? account.creditLimit - account.balance
                             : account.balance,
-                          currency
+                          accountCurrency(account, currency)
                         )}
                         usage={
                           account.classification === "credit" && account.creditLimit
@@ -328,7 +332,7 @@ export default function Dashboard() {
                     title={transaction.title}
                     meta={`${accountName(transaction.accountId)} · ${new Date(transaction.date).toLocaleDateString(undefined, { month: "short", day: "numeric" })}`}
                     amount={signed}
-                    formatted={`${signed > 0 ? "+" : signed < 0 ? "−" : ""}${money(transaction.amount)}`}
+                    formatted={`${signed > 0 ? "+" : signed < 0 ? "−" : ""}${money(transaction.amount, accountCurrency(store.accounts.find((item) => item.id === transaction.accountId), currency))}`}
                   />
                 );
               })}

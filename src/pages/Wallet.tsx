@@ -12,10 +12,12 @@ import { WalletCard } from "../components/ui/WalletCard";
 import { showToast } from "../components/Toast";
 import { APP_BRANDING } from "../config/app";
 import { ACCOUNT_PRESETS } from "../lib/catalog";
-import { formatCurrency, getWalletSummary } from "../lib/finance";
+import { formatCurrency, getCurrencyOptions, getWalletSummary } from "../lib/finance";
 import { accountDetails, accountInitials } from "../lib/ui";
+import { accountCurrency } from "../lib/fx";
 import { useStore } from "../store/useStore";
-import type { AccountType } from "../types/finance";
+import { useFxStore } from "../hooks/useFxRates";
+import type { AccountType, CurrencyCode } from "../types/finance";
 
 type WalletTab = "all" | "debit" | "credit";
 
@@ -47,7 +49,8 @@ function getDailyBars(values: number[]) {
 export default function Wallet() {
   const store = useStore();
   const navigate = useNavigate();
-  const wallet = getWalletSummary(store);
+  const rates = useFxStore((state) => state.rates);
+  const wallet = getWalletSummary(store, rates);
   const [tab, setTab] = useState<WalletTab>("all");
   const [view, setView] = useState<"grid" | "list">("grid");
   const [hidden, setHidden] = useState(false);
@@ -55,6 +58,7 @@ export default function Wallet() {
   const [selectedPresetKey, setSelectedPresetKey] = useState<string>(ACCOUNT_PRESETS[0].key);
   const [accountName, setAccountName] = useState("");
   const [openingBalance, setOpeningBalance] = useState("0");
+  const [newCurrency, setNewCurrency] = useState<CurrencyCode | "">("");
 
   const selectedPreset = ACCOUNT_PRESETS.find((preset) => preset.key === selectedPresetKey) ?? ACCOUNT_PRESETS[0];
 
@@ -87,7 +91,7 @@ export default function Wallet() {
   }, [store.transactions]);
 
   const bars = getDailyBars(weekValues);
-  const strongest = [...wallet.balances].sort((first, second) => second.balance - first.balance)[0];
+  const strongest = [...wallet.balances].sort((first, second) => second.mainBalance - first.mainBalance)[0];
   const currency = store.settings.currencyCode;
   const money = (amount: number, code: string = currency) =>
     hidden ? "••••••" : formatCurrency(amount, code);
@@ -105,7 +109,7 @@ export default function Wallet() {
       openingBalance: balance,
       color: selectedPreset.color,
       icon: selectedPreset.icon,
-      currencyCode: selectedPreset.currencyCode,
+      currencyCode: newCurrency || selectedPreset.currencyCode || currency,
       institution: selectedPreset.name,
       details: selectedPreset.details,
       annualYield: "annualYield" in selectedPreset ? selectedPreset.annualYield : undefined,
@@ -118,6 +122,7 @@ export default function Wallet() {
     setIsPickerOpen(false);
     setAccountName("");
     setOpeningBalance("0");
+    setNewCurrency("");
     setSelectedPresetKey(ACCOUNT_PRESETS[0].key);
     showToast("Account added to your wallet.", "success");
   };
@@ -206,14 +211,15 @@ export default function Wallet() {
           {visibleAccounts.map((account) => {
             const isCredit = account.classification === "credit" && Boolean(account.creditLimit);
             const limit = account.creditLimit ?? 0;
+            const code = accountCurrency(account, currency);
             return (
               <WalletCard
                 key={account.id}
                 name={account.name}
-                initials={accountInitials(account.name, account.icon, currency)}
+                initials={accountInitials(account.name, account.icon, code)}
                 color={account.color}
                 label={isCredit ? "Available credit" : "Balance"}
-                amount={money(isCredit ? limit - account.balance : account.balance)}
+                amount={money(isCredit ? limit - account.balance : account.balance, code)}
                 usage={isCredit ? account.balance / limit : undefined}
                 onClick={() => navigate(`/wallet/${account.id}`)}
               />
@@ -231,7 +237,7 @@ export default function Wallet() {
                 className="flex min-h-[60px] w-full items-center gap-3 py-2 text-left"
               >
                 <BrandMark
-                  label={accountInitials(account.name, account.icon, currency)}
+                  label={accountInitials(account.name, account.icon, accountCurrency(account, currency))}
                   color={account.color}
                   textColor="#ffffff"
                   size="sm"
@@ -239,11 +245,11 @@ export default function Wallet() {
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-sm font-semibold text-ink">{account.name}</span>
                   <span className="block truncate text-xs text-muted">
-                    {accountDetails(account.details, account.classification, currency)}
+                    {accountDetails(account.details, account.classification, accountCurrency(account, currency))}
                   </span>
                 </span>
                 <span className="shrink-0 text-sm font-bold text-ink">
-                  {money(account.balance)}
+                  {money(account.balance, accountCurrency(account, currency))}
                 </span>
               </button>
             ))}
@@ -313,6 +319,7 @@ export default function Wallet() {
                   setSelectedPresetKey(preset.key);
                   setAccountName(preset.name);
                   setOpeningBalance(String(starterBalances[preset.key] ?? 0));
+                  setNewCurrency("");
                 }}
                 className={`rounded-2xl border px-2 py-4 text-center transition ${
                   selectedPresetKey === preset.key ? "border-brand bg-brand/10" : "border-line bg-raised"
@@ -347,6 +354,22 @@ export default function Wallet() {
                 inputMode="decimal"
                 className="min-h-[48px] w-full rounded-2xl border border-line bg-raised px-4 text-base text-ink outline-none focus:border-brand"
               />
+            </label>
+            <label className="block">
+              <span className="mb-2 block text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">
+                Account currency
+              </span>
+              <select
+                value={newCurrency || selectedPreset.currencyCode || currency}
+                onChange={(event) => setNewCurrency(event.target.value as CurrencyCode)}
+                className="min-h-[48px] w-full rounded-2xl border border-line bg-raised px-4 text-base text-ink outline-none focus:border-brand"
+              >
+                {getCurrencyOptions().map((option) => (
+                  <option key={option.code} value={option.code}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
             </label>
           </div>
         </div>

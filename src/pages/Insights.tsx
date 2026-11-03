@@ -2,13 +2,13 @@ import { MonthlyInsightsPanel } from "../components/dashboard/MonthlyInsightsPan
 import { UpcomingPaymentsPanel } from "../components/dashboard/UpcomingPaymentsPanel";
 import { CategorySpendChart } from "../components/insights/CategorySpendChart";
 import { TrendCharts } from "../components/insights/TrendCharts";
-import { useStore } from "../store/useStore";
+import { useMainCurrencyView } from "../hooks/useFxRates";
 import { formatCurrency, getMonthlyInsightSummary, getMonthlySummary } from "../lib/finance";
 import { PageIntro } from "../components/ui/PageIntro";
 import { StatCard } from "../components/ui/StatCard";
 
 export default function Insights() {
-  const store = useStore();
+  const store = useMainCurrencyView();
   const insight = getMonthlyInsightSummary(store);
   const summary = getMonthlySummary(store);
 

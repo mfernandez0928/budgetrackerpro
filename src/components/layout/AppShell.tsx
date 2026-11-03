@@ -4,12 +4,14 @@ import { Sidebar } from "./Sidebar";
 import { InstallPromptCard } from "../pwa/InstallPromptCard";
 import { useOnlineStatus } from "../../hooks/useOnlineStatus";
 import { useCloudSync } from "../../hooks/useCloudSync";
+import { useFxRefresh } from "../../hooks/useFxRates";
 import { useAuth } from "../../context/AuthContext";
 
 export function AppShell() {
   const isOnline = useOnlineStatus();
   const { user } = useAuth();
   useCloudSync(user?.uid);
+  useFxRefresh();
 
   return (
     <div className="min-h-screen bg-canvas text-ink md:flex">

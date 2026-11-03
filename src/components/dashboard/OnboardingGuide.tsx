@@ -1,11 +1,11 @@
 import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import { useNavigate } from "react-router-dom";
-import { useStore } from "../../store/useStore";
+import { useMainCurrencyView } from "../../hooks/useFxRates";
 import { getOnboardingChecklist } from "../../lib/finance";
 import { ProgressBar } from "../ui/ProgressBar";
 
 export function OnboardingGuide() {
-  const store = useStore();
+  const store = useMainCurrencyView();
   const navigate = useNavigate();
   const checklist = getOnboardingChecklist(store);
 

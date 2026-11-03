@@ -2,6 +2,8 @@ import { useMemo, useState } from "react";
 import { ArrowPathRoundedSquareIcon, PlusIcon } from "@heroicons/react/24/outline";
 import { useStore } from "../../store/useStore";
 import { getTodayISO } from "../../lib/date";
+import { accountCurrency, convertAmount, resolveReceivedAmount } from "../../lib/fx";
+import { useFxStore } from "../../hooks/useFxRates";
 import { SectionHeader } from "../ui/SectionHeader";
 import { showToast } from "../Toast";
 import type { PaymentMethod, TransactionType } from "../../types/finance";
@@ -9,7 +11,8 @@ import type { PaymentMethod, TransactionType } from "../../types/finance";
 const paymentMethods: PaymentMethod[] = ["cash", "bank", "card", "ewallet", "transfer"];
 
 export function TransactionComposer() {
-  const { addTransaction, addRecurringBill, categories, accounts } = useStore();
+  const { addTransaction, addRecurringBill, categories, accounts, settings } = useStore();
+  const rates = useFxStore((state) => state.rates);
   const [form, setForm] = useState({
     title: "",
     amount: "",
@@ -18,6 +21,7 @@ export function TransactionComposer() {
     categoryId: "",
     accountId: accounts[0]?.id ?? "",
     toAccountId: accounts[1]?.id ?? "",
+    received: "",
     paymentMethod: "cash" as PaymentMethod,
     notes: "",
     createRecurring: false,
@@ -35,6 +39,15 @@ export function TransactionComposer() {
 
   const selectedCategoryId =
     form.categoryId || availableCategories[0]?.id || categories[0]?.id || "";
+  const fromCurrency = accountCurrency(
+    accounts.find((account) => account.id === form.accountId),
+    settings.currencyCode
+  );
+  const toCurrency = accountCurrency(
+    accounts.find((account) => account.id === form.toAccountId),
+    settings.currencyCode
+  );
+  const crossCurrencyTransfer = form.type === "transfer" && fromCurrency !== toCurrency;
 
   function resetForm() {
     setForm({
@@ -45,6 +58,7 @@ export function TransactionComposer() {
       categoryId: "",
       accountId: accounts[0]?.id ?? "",
       toAccountId: accounts[1]?.id ?? "",
+      received: "",
       paymentMethod: "cash",
       notes: "",
       createRecurring: false,
@@ -61,6 +75,15 @@ export function TransactionComposer() {
       return;
     }
 
+    const toAmount =
+      form.type === "transfer"
+        ? resolveReceivedAmount(Math.abs(amount), form.received, fromCurrency, toCurrency, rates)
+        : undefined;
+    if (toAmount === null) {
+      showToast("Enter the amount received as a number above zero.", "warning");
+      return;
+    }
+
     const isOffline = !navigator.onLine;
 
     addTransaction({
@@ -71,6 +94,7 @@ export function TransactionComposer() {
       categoryId: selectedCategoryId,
       accountId: form.accountId,
       toAccountId: form.type === "transfer" ? form.toAccountId : undefined,
+      toAmount,
       paymentMethod: form.type === "transfer" ? "transfer" : form.paymentMethod,
       notes: form.notes.trim(),
       status: "cleared",
@@ -148,7 +172,7 @@ export function TransactionComposer() {
             />
           </label>
           <label className="space-y-2 text-sm">
-            <span className="text-muted">Amount</span>
+            <span className="text-muted">Amount ({fromCurrency})</span>
             <input
               inputMode="decimal"
               value={form.amount}
@@ -242,6 +266,26 @@ export function TransactionComposer() {
             </label>
           )}
         </div>
+
+        {crossCurrencyTransfer ? (
+          <label className="block space-y-2 text-sm">
+            <span className="text-muted">Amount received ({toCurrency})</span>
+            <input
+              inputMode="decimal"
+              value={form.received}
+              onChange={(event) => setForm((current) => ({ ...current, received: event.target.value }))}
+              placeholder={
+                Number(form.amount) > 0
+                  ? `≈ ${convertAmount(Number(form.amount), fromCurrency, toCurrency, rates).toFixed(2)}`
+                  : "0.00"
+              }
+              className="w-full rounded-2xl border border-line bg-raised px-4 py-3 text-ink outline-none transition placeholder:text-muted focus:border-brand"
+            />
+            <span className="block text-xs text-muted">
+              Leave blank to use today's rate, or enter what your bank actually credited.
+            </span>
+          </label>
+        ) : null}
 
         <label className="space-y-2 text-sm">
           <span className="text-muted">Notes</span>

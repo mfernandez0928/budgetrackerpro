@@ -78,6 +78,8 @@ export interface Transaction {
   categoryId: string;
   accountId: string;
   toAccountId?: string;
+  // Transfers between currencies: amount received in the destination account currency.
+  toAmount?: number;
   paymentMethod: PaymentMethod;
   notes?: string;
   recurringId?: string;

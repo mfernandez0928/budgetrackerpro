@@ -1,11 +1,11 @@
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 import { useChartColors } from "../../hooks/useChartColors";
-import { useStore } from "../../store/useStore";
+import { useMainCurrencyView } from "../../hooks/useFxRates";
 import { formatCurrency, getCategorySpendData } from "../../lib/finance";
 import { EmptyState } from "../ui/EmptyState";
 
 export function CategorySpendChart() {
-  const store = useStore();
+  const store = useMainCurrencyView();
   const colors = useChartColors();
   const data = getCategorySpendData(store);
 

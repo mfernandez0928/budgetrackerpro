@@ -14,7 +14,16 @@ import { showToast } from "../components/Toast";
 import { useStore } from "../store/useStore";
 import { getTodayISO } from "../lib/date";
 import { accountInitials } from "../lib/ui";
-import { formatCurrency, getAccountBalances, getAccountFlowSummary, getUpcomingPayments } from "../lib/finance";
+import { accountCurrency, convertAmount, resolveReceivedAmount } from "../lib/fx";
+import { useFxStore } from "../hooks/useFxRates";
+import type { CurrencyCode } from "../types/finance";
+import {
+  formatCurrency,
+  getAccountBalances,
+  getAccountFlowSummary,
+  getCurrencyOptions,
+  getUpcomingPayments,
+} from "../lib/finance";
 
 type Sheet = "edit" | "delete" | "transfer" | null;
 
@@ -32,8 +41,9 @@ export default function WalletAccountDetail() {
   const account = accounts.find((item) => item.id === accountId);
   const [sheet, setSheet] = useState<Sheet>(null);
   const [removed, setRemoved] = useState(false);
-  const [editForm, setEditForm] = useState({ name: "", openingBalance: "", creditLimit: "" });
-  const [transferForm, setTransferForm] = useState({ toAccountId: "", amount: "", date: "", notes: "" });
+  const rates = useFxStore((state) => state.rates);
+  const [editForm, setEditForm] = useState({ name: "", openingBalance: "", creditLimit: "", currencyCode: "" });
+  const [transferForm, setTransferForm] = useState({ toAccountId: "", amount: "", received: "", date: "", notes: "" });
 
   if (!account) {
     // Just deleted: render nothing while the redirect to /wallet settles.
@@ -52,7 +62,8 @@ export default function WalletAccountDetail() {
     );
   }
 
-  const currencyCode = store.settings.currencyCode;
+  const mainCurrency = store.settings.currencyCode;
+  const currencyCode = accountCurrency(account, mainCurrency);
   const flow = getAccountFlowSummary(store, account.id);
   const spendable = account.classification === "credit"
     ? Math.max(0, (account.creditLimit ?? 0) - account.balance)
@@ -62,6 +73,8 @@ export default function WalletAccountDetail() {
   const linkedCount = store.transactions.filter(
     (item) => item.accountId === account.id || item.toAccountId === account.id
   ).length;
+  const transferTarget = otherAccounts.find((item) => item.id === transferForm.toAccountId);
+  const transferCurrency = accountCurrency(transferTarget, mainCurrency);
   const closeSheet = () => setSheet(null);
 
   const openEdit = () => {
@@ -69,6 +82,7 @@ export default function WalletAccountDetail() {
       name: account.name,
       openingBalance: String(account.openingBalance),
       creditLimit: account.creditLimit !== undefined ? String(account.creditLimit) : "",
+      currencyCode,
     });
     setSheet("edit");
   };
@@ -84,6 +98,7 @@ export default function WalletAccountDetail() {
     store.updateAccount(account.id, {
       name,
       openingBalance,
+      currencyCode: editForm.currencyCode as CurrencyCode,
       ...(account.classification === "credit" && editForm.creditLimit.trim() && Number.isFinite(creditLimit)
         ? { creditLimit }
         : {}),
@@ -104,7 +119,7 @@ export default function WalletAccountDetail() {
       showToast("Add another account first to transfer money.", "warning");
       return;
     }
-    setTransferForm({ toAccountId: otherAccounts[0].id, amount: "", date: getTodayISO(), notes: "" });
+    setTransferForm({ toAccountId: otherAccounts[0].id, amount: "", received: "", date: getTodayISO(), notes: "" });
     setSheet("transfer");
   };
 
@@ -115,6 +130,17 @@ export default function WalletAccountDetail() {
       showToast("Choose an account and enter an amount above zero.", "warning");
       return;
     }
+    const toAmount = resolveReceivedAmount(
+      amount,
+      transferForm.received,
+      currencyCode,
+      accountCurrency(target, mainCurrency),
+      rates,
+    );
+    if (toAmount === null) {
+      showToast("Enter the amount received as a number above zero.", "warning");
+      return;
+    }
     store.addTransaction({
       title: `Transfer to ${target.name}`,
       amount,
@@ -123,6 +149,7 @@ export default function WalletAccountDetail() {
       categoryId: store.categories.find((item) => item.type === "expense")?.id ?? store.categories[0]?.id ?? "",
       accountId: account.id,
       toAccountId: target.id,
+      toAmount,
       paymentMethod: "transfer",
       notes: transferForm.notes.trim(),
       status: "cleared",
@@ -375,6 +402,20 @@ export default function WalletAccountDetail() {
               />
             </label>
           ) : null}
+          <label className="block">
+            <span className={fieldLabel}>Account currency</span>
+            <select
+              value={editForm.currencyCode}
+              onChange={(event) => setEditForm((current) => ({ ...current, currencyCode: event.target.value }))}
+              className={fieldInput}
+            >
+              {getCurrencyOptions().map((option) => (
+                <option key={option.code} value={option.code}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
         </div>
       </PickerSheet>
 
@@ -439,7 +480,7 @@ export default function WalletAccountDetail() {
             </select>
           </label>
           <label className="block">
-            <span className={fieldLabel}>Amount</span>
+            <span className={fieldLabel}>Amount sent ({currencyCode})</span>
             <input
               value={transferForm.amount}
               onChange={(event) => setTransferForm((current) => ({ ...current, amount: event.target.value }))}
@@ -448,6 +489,25 @@ export default function WalletAccountDetail() {
               className={fieldInput}
             />
           </label>
+          {transferTarget && transferCurrency !== currencyCode ? (
+            <label className="block">
+              <span className={fieldLabel}>Amount received ({transferCurrency})</span>
+              <input
+                value={transferForm.received}
+                onChange={(event) => setTransferForm((current) => ({ ...current, received: event.target.value }))}
+                inputMode="decimal"
+                placeholder={
+                  Number(transferForm.amount) > 0
+                    ? `≈ ${convertAmount(Number(transferForm.amount), currencyCode, transferCurrency, rates).toFixed(2)}`
+                    : "0.00"
+                }
+                className={fieldInput}
+              />
+              <span className="mt-1 block text-xs text-muted">
+                Leave blank to use today's rate, or enter what your bank actually credited.
+              </span>
+            </label>
+          ) : null}
           <label className="block">
             <span className={fieldLabel}>Date</span>
             <input

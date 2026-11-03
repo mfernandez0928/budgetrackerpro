@@ -3,6 +3,7 @@ import { ArrowDownTrayIcon, ArrowUpTrayIcon, DevicePhoneMobileIcon } from "@hero
 import { useStore } from "../store/useStore";
 import { useAuth } from "../context/AuthContext";
 import { useSyncStatus } from "../hooks/useCloudSync";
+import { useFxStore } from "../hooks/useFxRates";
 import { getCurrencyOptions } from "../lib/finance";
 import { exportSnapshotAsJson, exportTransactionsAsCsv, parseCsvTransactions, parseJsonSnapshot } from "../lib/export";
 import { Card } from "../components/ui/Card";
@@ -41,6 +42,10 @@ export default function Settings() {
   const { user } = useAuth();
   const importRef = useRef<HTMLInputElement>(null);
   const sync = useSyncStatus();
+  const rates = useFxStore((state) => state.rates);
+  const fxDescription = rates
+    ? `Totals convert to this. Each account keeps its own currency. Rates from the ECB, ${rates.date}.`
+    : "Totals convert to this. Each account keeps its own currency. Rates load when you are online.";
   const syncLabel =
     sync.status === "error"
       ? `Cloud sync failed: ${sync.error}`
@@ -101,7 +106,8 @@ export default function Settings() {
             }
           />
           <SettingRow
-            label="Currency"
+            label="Main currency"
+            description={fxDescription}
             control={
               <select
                 value={store.settings.currencyCode}
